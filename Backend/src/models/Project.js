@@ -23,7 +23,7 @@ const Project = sequalize.define(
       },
     },
     start_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false,
       validate: {
         notEmpty: {
@@ -32,7 +32,7 @@ const Project = sequalize.define(
       },
     },
     end_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false,
       validate: {
         notEmpty: {
