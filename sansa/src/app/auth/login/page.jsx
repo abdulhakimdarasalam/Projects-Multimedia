@@ -1,5 +1,4 @@
-// src/app/login/page.jsx
-"use client"; // Kita butuh interaktivitas untuk show/hide password nanti
+"use client";
 
 import { useState } from 'react';
 import Image from 'next/image';
@@ -69,7 +68,7 @@ export default function LoginPage() {
 
           <p className="mt-10 text-center text-sm text-gray-500">
             Don't have an account?{' '}
-            <a href="#" className="font-semibold leading-6 text-[#6080A4] hover:text-[#526d8c]">
+            <a href="/auth/register" className="font-semibold leading-6 text-[#6080A4] hover:text-[#526d8c]">
               Register Now
             </a>
           </p>
