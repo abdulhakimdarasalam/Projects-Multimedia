@@ -2,61 +2,82 @@
 "use client";
 
 import { useState } from 'react';
-import BaseProjectCard from '@/components/baseproject/BaseProjectCard';
-import { MOCK_BASE_PROJECTS } from '@/data/mockBaseProjects';
 import { HiChevronRight } from 'react-icons/hi';
+
+// Impor komponen dan data yang relevan
+import BaseProjectCard from '@/components/baseproject/BaseProjectCard';
+import ActiveProjectCard from '@/components/myproject/MyProjectCard'; // Komponen baru
+import { MOCK_BASE_PROJECTS } from '@/data/mockBaseProjects';
+import { MOCK_ACTIVE_PROJECTS } from '@/data/mockMyProjects'; // Data baru
 
 export default function BaseProjectPage() {
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'mine'
 
-  // Nanti, data ini bisa difilter berdasarkan tab yang aktif
-  const projects = MOCK_BASE_PROJECTS;
+  // Siapkan data untuk masing-masing tab
+  const allProjects = MOCK_BASE_PROJECTS;
+  const myProjects = MOCK_ACTIVE_PROJECTS; // Menggunakan data baru
 
   return (
     <div>
-      {/* Header */}
-      <header>
-        <h1 className="text-3xl font-bold text-gray-800">List Project</h1>
-      </header>
-
-      {/* Tabs */}
-      <div className="mt-8 flex items-center gap-2 border-b border-gray-200">
+      {/* Tabs - Tidak berubah */}
+      <div className="flex items-center gap-2">
         <button
           onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-lg px-5 py-2 text-sm font-medium transition-colors ${
             activeTab === 'all'
-              ? 'border-b-2 border-sky-600 text-sky-600'
-              : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700'
+              ? 'bg-gray-200 text-gray-800'
+              : 'text-gray-500 hover:bg-gray-100'
           }`}
         >
           Semua Project
         </button>
         <button
           onClick={() => setActiveTab('mine')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-lg px-5 py-2 text-sm font-medium transition-colors ${
             activeTab === 'mine'
-              ? 'border-b-2 border-sky-600 text-sky-600'
-              : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700'
+              ? 'bg-gray-200 text-gray-800'
+              : 'text-gray-500 hover:bg-gray-100'
           }`}
         >
-          Project saya
+          Project Saya
         </button>
       </div>
 
-      {/* Project Grid */}
-      <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-        {projects.map((project) => (
-          <BaseProjectCard key={project.id} project={project} />
-        ))}
-      </div>
-      
-      {/* Pagination */}
-      <div className="mt-12 flex justify-end">
-        <button className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-sky-600">
-          <span>Next</span>
-          <span>2</span>
-          <HiChevronRight className="h-5 w-5" />
-        </button>
+      {/* Konten Dinamis Berdasarkan Tab */}
+      <div className="mt-8">
+        {activeTab === 'all' ? (
+          // === TAMPILAN SEMUA PROJECT (GRID) ===
+          <>
+            <header>
+              <h1 className="text-3xl font-bold text-gray-800">List Project</h1>
+            </header>
+            <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+              {allProjects.map((project) => (
+                <BaseProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+            <div className="mt-12 flex justify-end">
+              <button className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-sky-600">
+                <span>Next</span>
+                <span>2</span>
+                <HiChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </>
+        ) : (
+          // === TAMPILAN PROJECT SAYA (LIST BARU) ===
+          <>
+            <header>
+              <h1 className="text-3xl font-bold text-gray-800">Project Aktif Saya</h1>
+              <p className="mt-1 text-gray-500">Keep track biar progress-mu makin lancar!</p>
+            </header>
+            <div className="mt-8 space-y-4">
+              {myProjects.map((project) => (
+                <ActiveProjectCard key={project.id} project={project} /> // Menggunakan komponen baru
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
