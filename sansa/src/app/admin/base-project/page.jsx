@@ -1,18 +1,16 @@
 // src/app/admin/base-project/page.jsx
+
+import Link from 'next/link';
 import { MOCK_ADMIN_BASE_PROJECTS } from '@/data/mockAdminBaseProjects';
 import { HiOutlinePencil, HiOutlineUserAdd, HiOutlineTrash, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
-// Helper function untuk styling status
+// Fungsi untuk menentukan warna status (tidak berubah)
 const getStatusClass = (status) => {
   switch (status) {
-    case 'In Progress':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'Not Started':
-      return 'bg-gray-100 text-gray-800';
-    case 'Completed':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
+    case 'In Progress': return 'bg-yellow-100 text-yellow-800';
+    case 'Not Started': return 'bg-gray-100 text-gray-800';
+    case 'Completed': return 'bg-green-100 text-green-800';
+    default: return 'bg-gray-100 text-gray-800';
   }
 };
 
@@ -21,7 +19,7 @@ export default function AdminBaseProjectPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header Halaman */}
       <header>
         <h1 className="text-2xl font-bold text-gray-800">Welcome admin!</h1>
         <p className="mt-1 text-3xl font-bold text-gray-800">Kelola Project</p>
@@ -30,23 +28,28 @@ export default function AdminBaseProjectPage() {
       {/* Tombol Tambah Project */}
       <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
         <p className="text-gray-600">Tambah Project baru</p>
-        <button className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+        <Link 
+          href="/admin/base-project/add"
+          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+        >
           + Tambah Project Baru
-        </button>
+        </Link>
       </div>
 
-      {/* Tabel Project */}
+      {/* ====================================================== */}
+      {/* BAGIAN TABEL YANG HILANG - KEMBALIKAN KODE INI */}
+      {/* ====================================================== */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="p-4 font-medium"></th>
-                <th className="p-4 font-medium">Nama Project</th>
-                <th className="p-4 font-medium">Tanggal mulai</th>
-                <th className="p-4 font-medium">Deadline</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Aksi</th>
+                <th className="p-4 w-12"><input type="checkbox" className="rounded border-gray-300" /></th>
+                <th className="p-4 font-semibold text-gray-600">Nama Project</th>
+                <th className="p-4 font-semibold text-gray-600">Tanggal mulai</th>
+                <th className="p-4 font-semibold text-gray-600">Deadline</th>
+                <th className="p-4 font-semibold text-gray-600">Status</th>
+                <th className="p-4 font-semibold text-gray-600">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -73,17 +76,7 @@ export default function AdminBaseProjectPage() {
             </tbody>
           </table>
         </div>
-        
-        {/* Pagination */}
-        <div className="flex items-center justify-end gap-2 border-t p-4 text-sm">
-            <button className="rounded p-2 hover:bg-gray-100"><HiChevronLeft className="h-5 w-5"/></button>
-            <button className="rounded h-8 w-8 bg-sky-100 text-sky-600 font-semibold">1</button>
-            <button className="rounded h-8 w-8 hover:bg-gray-100">2</button>
-            <button className="rounded h-8 w-8 hover:bg-gray-100">3</button>
-            <span>...</span>
-            <button className="rounded h-8 w-8 hover:bg-gray-100">25</button>
-            <button className="rounded p-2 hover:bg-gray-100"><HiChevronRight className="h-5 w-5"/></button>
-        </div>
+        {/* Disini bisa ditambahkan kode pagination jika perlu */}
       </div>
     </div>
   );
