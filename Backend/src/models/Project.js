@@ -11,22 +11,23 @@ const Project = sequalize.define(
         notEmpty: {
           msg: "Title is required",
         },
+        notNull: {
+          msg: "Title is required",
+        },
       },
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
-      validate: {
-        notEmpty: {
-          msg: "Description is required",
-        },
-      },
     },
     start_date: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       validate: {
         notEmpty: {
+          msg: "Start date is required",
+        },
+        notNull: {
           msg: "Start date is required",
         },
       },
@@ -36,6 +37,9 @@ const Project = sequalize.define(
       allowNull: false,
       validate: {
         notEmpty: {
+          msg: "End date is required",
+        },
+        notNull: {
           msg: "End date is required",
         },
       },
