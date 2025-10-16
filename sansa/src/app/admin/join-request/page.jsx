@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from 'react';
-import { MOCK_JOIN_REQUESTS } from '@/data/mockJoinRequests';
+import Link from 'next/link';
+import { MOCK_JOIN_REQUESTS } from '../../../data/mockJoinRequests.js';
 import { HiCheck, HiX, HiOutlineMenu } from 'react-icons/hi';
 
 export default function JoinRequestPage() {
-  // Simpan daftar request ke dalam state agar bisa diubah (dihapus dari list)
   const [requests, setRequests] = useState(MOCK_JOIN_REQUESTS);
 
   // Fungsi untuk menangani saat admin menerima permintaan
@@ -15,16 +15,8 @@ export default function JoinRequestPage() {
     setRequests(currentRequests => currentRequests.filter(req => req.id !== requestId));
   };
 
-  // Fungsi untuk menangani saat admin menolak permintaan
-  const handleReject = (requestId) => {
-    console.log(`Rejected request with ID: ${requestId}`);
-    // Hapus request dari daftar di UI
-    setRequests(currentRequests => currentRequests.filter(req => req.id !== requestId));
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header Halaman */}
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-800">Request Anggota</h1>
         <button className="p-2 text-gray-500 rounded-md hover:bg-gray-100">
@@ -32,7 +24,6 @@ export default function JoinRequestPage() {
         </button>
       </header>
 
-      {/* Tabel Request */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -61,13 +52,13 @@ export default function JoinRequestPage() {
                         <HiCheck className="h-4 w-4" />
                         accept
                       </button>
-                      <button 
-                        onClick={() => handleReject(request.id)}
+                      <Link
+                        href={`/admin/join-request/reject/${request.id}`}
                         className="flex items-center gap-1 rounded-md bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-200"
                       >
                         <HiX className="h-4 w-4" />
                         reject
-                      </button>
+                      </Link>
                     </div>
                   </td>
                 </tr>
@@ -75,8 +66,8 @@ export default function JoinRequestPage() {
             </tbody>
           </table>
         </div>
-         {/* Di sini bisa ditambahkan komponen pagination jika datanya banyak */}
       </div>
     </div>
   );
 }
+
