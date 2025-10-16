@@ -1,10 +1,10 @@
-// src/app/admin/base-project/page.jsx
+"use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MOCK_ADMIN_BASE_PROJECTS } from '@/data/mockAdminBaseProjects';
-import { HiOutlinePencil, HiOutlineUserAdd, HiOutlineTrash, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { HiOutlinePencil, HiOutlineUserAdd, HiOutlineTrash } from 'react-icons/hi';
 
-// Fungsi untuk menentukan warna status (tidak berubah)
 const getStatusClass = (status) => {
   switch (status) {
     case 'In Progress': return 'bg-yellow-100 text-yellow-800';
@@ -15,7 +15,13 @@ const getStatusClass = (status) => {
 };
 
 export default function AdminBaseProjectPage() {
+  const router = useRouter();
   const projects = MOCK_ADMIN_BASE_PROJECTS;
+
+  const handleRowClick = (projectId) => {
+    // 👇 PERUBAHAN 2: Sesuaikan path ke folder 'add-task'
+    router.push(`/admin/base-project/${projectId}/task`);
+  };
 
   return (
     <div className="space-y-8">
@@ -29,16 +35,15 @@ export default function AdminBaseProjectPage() {
       <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
         <p className="text-gray-600">Tambah Project baru</p>
         <Link 
-          href="/admin/base-project/add"
+          // 👇 PERUBAHAN 1: Sesuaikan path ke folder 'add-project'
+          href="/admin/base-project/add-project"
           className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
         >
           + Tambah Project Baru
         </Link>
       </div>
 
-      {/* ====================================================== */}
-      {/* BAGIAN TABEL YANG HILANG - KEMBALIKAN KODE INI */}
-      {/* ====================================================== */}
+      {/* Tabel Project */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -54,8 +59,14 @@ export default function AdminBaseProjectPage() {
             </thead>
             <tbody className="divide-y">
               {projects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
-                  <td className="p-4"><input type="checkbox" className="rounded border-gray-300" /></td>
+                <tr 
+                  key={project.id} 
+                  className="hover:bg-gray-100 cursor-pointer transition-colors"
+                  onClick={() => handleRowClick(project.id)}
+                >
+                  <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" className="rounded border-gray-300" />
+                  </td>
                   <td className="p-4 font-medium text-gray-800">{project.name}</td>
                   <td className="p-4 text-gray-600">{project.startDate}</td>
                   <td className="p-4 text-gray-600">{project.deadline}</td>
@@ -64,7 +75,7 @@ export default function AdminBaseProjectPage() {
                       {project.status}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
                       <button className="rounded p-2 text-green-600 hover:bg-green-100"><HiOutlinePencil className="h-4 w-4" /></button>
                       <button className="rounded p-2 text-blue-600 hover:bg-blue-100"><HiOutlineUserAdd className="h-4 w-4" /></button>
@@ -76,7 +87,6 @@ export default function AdminBaseProjectPage() {
             </tbody>
           </table>
         </div>
-        {/* Disini bisa ditambahkan kode pagination jika perlu */}
       </div>
     </div>
   );
