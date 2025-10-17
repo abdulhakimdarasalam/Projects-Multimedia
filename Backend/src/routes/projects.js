@@ -9,27 +9,27 @@ const {
 } = require("../middlewares/authMiddleware");
 
 router.get(
-  "/data",
+  "/",
   verifyToken,
   autoRefreshToken,
   projectsController.getAllProjects
 );
 router.post(
-  "/create",
+  "/",
   verifyToken,
   isAdmin,
   autoRefreshToken,
   projectsController.createProject
 );
 router.put(
-  "/edit/:id",
+  "/:id",
   verifyToken,
   isAdmin,
   autoRefreshToken,
   projectsController.updateProject
 );
 router.delete(
-  "/delete/:id",
+  "/:id",
   verifyToken,
   isAdmin,
   autoRefreshToken,

@@ -8,23 +8,23 @@ const {
   autoRefreshToken,
 } = require("../middlewares/authMiddleware");
 
-router.get("/data/:id", taskController.getAllTasksByProjectId);
+router.get("/:id", taskController.getAllTasksByProjectId);
 router.post(
-  "/create",
+  "/",
   verifyToken,
   isAdmin,
   autoRefreshToken,
   taskController.createTask
 );
 router.put(
-  "/edit/:id",
+  "/:id",
   verifyToken,
   isAdmin,
   autoRefreshToken,
   taskController.updateTask
 );
 router.delete(
-  "/delete/:id",
+  "/:id",
   verifyToken,
   isAdmin,
   autoRefreshToken,
