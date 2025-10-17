@@ -1,39 +1,34 @@
 const express = require("express");
 
 const router = express.Router();
-const projectsController = require("../controllers/projects");
+const taskController = require("../controllers/taskController");
 const {
   verifyToken,
   isAdmin,
   autoRefreshToken,
 } = require("../middlewares/authMiddleware");
 
-router.get(
-  "/",
-  verifyToken,
-  autoRefreshToken,
-  projectsController.getAllProjects
-);
+router.get("/:id", taskController.getAllTasksByProjectId);
 router.post(
   "/",
   verifyToken,
   isAdmin,
   autoRefreshToken,
-  projectsController.createProject
+  taskController.createTask
 );
 router.put(
   "/:id",
   verifyToken,
   isAdmin,
   autoRefreshToken,
-  projectsController.updateProject
+  taskController.updateTask
 );
 router.delete(
   "/:id",
   verifyToken,
   isAdmin,
   autoRefreshToken,
-  projectsController.deleteProject
+  taskController.deleteTask
 );
 
 module.exports = router;

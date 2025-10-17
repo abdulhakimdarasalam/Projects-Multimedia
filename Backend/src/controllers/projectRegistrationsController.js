@@ -1,36 +1,60 @@
-const { ProjectRegistration } = require("../models");
+const { Project, User,ProjectRegistration } = require("../models");
+const { ValidationError } = require("sequelize");
 
+// Ambil data project registrations dengan filter status
+// Contoh di fe: GET /project-registrations?status=all/pending/accepted/rejected
 exports.getAllProjectRegistrations = async (req, res) => {
   try {
-    const projectRegistrations = await ProjectRegistration.findAll();
-    res.status(200).json(projectRegistrations);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
-  }
-};
+    const { status } = req.query; // Ambil query param 'status' (opsional)
+    const whereClause = {}; // Mulai tanpa filter, tambah nanti
 
-exports.getAllRejectedProjectRegistrations = async (req, res) => {
-  try {
-    const projectRegistrations = await ProjectRegistration.findAll({
-      where: { status: "rejected" },
-    });
-    res.status(200).json(projectRegistrations);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
-  }
-};
+    // Filter berdasarkan status kalau ada
+    if (status && status !== "all") {
+      // Validasi status valid
+      const validStatuses = ["pending", "accepted", "rejected"]; // Sesuaikan enum di model
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          message: "Status tidak valid. Gunakan: pending, accepted, rejected",
+        });
+      }
+      whereClause.status = status;
+    }
 
-exports.getAllAcceptedProjectRegistrations = async (req, res) => {
-  try {
     const projectRegistrations = await ProjectRegistration.findAll({
-      where: { status: "accepted" },
+      where: whereClause,
+      include: [
+        { model: Project, as: "Project" },
+        { model: User, as: "User" },
+      ],
+      order: [["createdAt", "DESC"]],
+      // Optional: Pagination
+      limit: req.query.limit ? parseInt(req.query.limit) : 50,
+      offset: req.query.offset ? parseInt(req.query.offset) : 0,
     });
-    res.status(200).json(projectRegistrations);
+
+    // Kalau status='all', grouping manual di BE (opsional, biar FE nggak filter)
+    let responseData = projectRegistrations;
+    if (status === "all" || !status) {
+      const grouped = {
+        pending: projectRegistrations.filter((pr) => pr.status === "pending"),
+        accepted: projectRegistrations.filter((pr) => pr.status === "accepted"),
+        rejected: projectRegistrations.filter((pr) => pr.status === "rejected"),
+      };
+      responseData = grouped;
+    }
+
+    res.status(200).json({
+      data: responseData,
+      total: projectRegistrations.length,
+      status: status || "all", // Info untuk FE
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    console.error("Error fetching project registrations:", error);
+    if (error instanceof ValidationError) {
+      res.status(400).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: "Something went wrong" });
+    }
   }
 };
 

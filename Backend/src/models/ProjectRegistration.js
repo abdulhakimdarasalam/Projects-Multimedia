@@ -10,6 +10,38 @@ const ProjectRegistration = sequalize.define("ProjectRegistration", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    validate: {
+      notEmpty: {
+        msg: "User ID is required",
+      },
+      notNull: {
+        msg: "User ID is required",
+      },
+    },
+  },
+  project_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: "Projects",
+      key: "id",
+    },
+    validate: {
+      notEmpty: {
+        msg: "Project ID is required",
+      },
+      notNull: {
+        msg: "Project ID is required",
+      },
+    },
+  },
 });
 
 module.exports = ProjectRegistration;
