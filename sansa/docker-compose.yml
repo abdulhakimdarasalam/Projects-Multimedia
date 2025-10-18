@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build: .
+    container_name: multimedia-fe-container
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
