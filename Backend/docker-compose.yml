@@ -27,3 +27,4 @@ services:
       DB_PORT: 3306
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
