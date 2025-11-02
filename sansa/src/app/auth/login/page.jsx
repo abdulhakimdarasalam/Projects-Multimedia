@@ -2,11 +2,52 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-// Impor ikon yang akan kita gunakan
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault(); // agar form tidak refresh
+    setIsLoading(true);
+    setError(null);
+
+    const API_BASE_URL = 'http://localhost:4000';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`,{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({email,password}),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login gagal. Periksa kembali email dan password anda');
+      }
+
+      console.log('Login berhasil:', data);
+
+      localStorage.setItem('accessToken', data.accessToken);
+
+      router.push('/user/dashboard');
+
+    } catch(err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F0F4F8]">
@@ -16,7 +57,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-[#5E7FAA]">Welcome Back #Stark</h1>
           <p className="mt-2 text-base text-gray-600">Log In To Your Account</p>
 
-          <form className="mt-8 space-y-6">
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}> 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               </label>
@@ -28,7 +69,9 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   placeholder="Enter your email here"
-                  className="w-full rounded-md border border-gray-300 p-3 pl-4 pr-10 focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-gray-300 p-3 pl-4 pr-10 focus:border-indigo-500 focus:ring-indigo-500 text-black"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
                 <HiOutlineMail className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               </div>
@@ -46,7 +89,9 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                   placeholder="Enter your password here"
-                  className="w-full rounded-md border border-gray-300 p-3 pl-4 pr-10 focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-gray-300 p-3 pl-4 pr-10 focus:border-indigo-500 focus:ring-indigo-500 text-black"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
@@ -58,11 +103,19 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/*tampilkan pesan error*/}
+            {error && (
+              <div className="rounded-md border-red-300 bg-red-50 p-3 text-center text-sm text-red-700">
+              {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full rounded-lg bg-[#6080A4] px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-[#526d8c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-[#6080A4] px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-[#526d8c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Login
+              {isLoading ? 'Loading...' : 'Login'}
             </button>
           </form>
 
