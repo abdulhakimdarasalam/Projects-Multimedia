@@ -44,3 +44,52 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+//handle register
+exports.register = async (req, res) => {
+  try {
+    // 1. Ambil data dari body (sesuai form frontend Anda)
+    const { fullName, email, password, phone, dob, gender, role } = req.body;
+
+    // 2. Validasi dasar
+    if (!email || !password || !fullName || !role) {
+      return res
+        .status(400)
+        .json({
+          message: "Email, password, nama lengkap, dan peran wajib diisi.",
+        });
+    }
+
+    // 3. Cek apakah email sudah terdaftar (menggunakan model 'User')
+    const existingUser = await User.findOne({ where: { email: email } });
+    if (existingUser) {
+      return res.status(409).json({ message: "Email already in use" }); // 409 = Conflict
+    }
+
+    // 4. Hash password (menggunakan 'bcrypt' sesuai file Anda)
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 5. Buat user baru di database
+    const newUser = await User.create({
+      // --- PERBAIKAN DI SINI ---
+      name: fullName, // Ganti 'fullName' menjadi 'name' agar cocok dengan model DB
+      // -------------------------
+      email: email,
+      password: hashedPassword, // Simpan password yang sudah di-hash
+      phone: phone,
+      dob: dob,
+      gender: gender,
+      role: role,
+    });
+
+    // 6. Kirim respons sukses
+    res
+      .status(201)
+      .json({ message: "User created successfully", userId: newUser.id });
+  } catch (error) {
+    // Tangani jika ada error server (konsisten dengan 'login')
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
