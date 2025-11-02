@@ -41,6 +41,22 @@ const User = sequelize.define(
         },
       },
     },
+
+    // --- KOLOM BARU YANG DITAMBAHKAN ---
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true, // Set 'true' jika boleh kosong, 'false' jika wajib
+    },
+    dob: {
+      type: DataTypes.DATEONLY, // DATEONLY lebih baik untuk tgl lahir drpd DATE
+      allowNull: true,
+    },
+    gender: {
+      type: DataTypes.ENUM("Male", "Female"), // Sesuaikan dengan <select> di frontend
+      allowNull: true,
+    },
+    // ---------------------------------
+
     role: { type: DataTypes.ENUM("admin", "member"), defaultValue: "member" },
     refresh_token: { type: DataTypes.TEXT, allowNull: true },
     deleted_at: {
@@ -49,8 +65,8 @@ const User = sequelize.define(
     },
   },
   {
-    paranoid: true,
-    deletedAt: "deleted_at",
+    paranoid: true, // Ini untuk soft delete
+    deletedAt: "deleted_at", // Memberitahu sequelize nama kolomnya
     timestamps: true,
   }
 );
