@@ -2,6 +2,18 @@ const { User } = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// Logika 'secure' cookie yang dinamis
+// 'true' jika di production, 'false' jika di development (misal: localhost)
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+// Opsi cookie yang konsisten
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PRODUCTION, // true hanya jika di HTTPS (production)
+  sameSite: "strict",
+  path: "/", // Penting: Tentukan path agar konsisten
+};
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -30,9 +42,7 @@ exports.login = async (req, res) => {
     // Kirim token
     res
       .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true, // aktifkan kalau pakai HTTPS
-        sameSite: "strict",
+        ...COOKIE_OPTIONS, // Gunakan opsi yang konsisten
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 hari
       })
       .json({
@@ -45,7 +55,7 @@ exports.login = async (req, res) => {
   }
 };
 
-//handle register
+// ... (exports.register Anda tetap sama) ...
 exports.register = async (req, res) => {
   try {
     // 1. Ambil data dari body (sesuai form frontend Anda)
@@ -53,11 +63,9 @@ exports.register = async (req, res) => {
 
     // 2. Validasi dasar
     if (!email || !password || !fullName || !role) {
-      return res
-        .status(400)
-        .json({
-          message: "Email, password, nama lengkap, dan peran wajib diisi.",
-        });
+      return res.status(400).json({
+        message: "Email, password, nama lengkap, dan peran wajib diisi.",
+      });
     }
 
     // 3. Cek apakah email sudah terdaftar (menggunakan model 'User')
@@ -89,6 +97,38 @@ exports.register = async (req, res) => {
       .json({ message: "User created successfully", userId: newUser.id });
   } catch (error) {
     // Tangani jika ada error server (konsisten dengan 'login')
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// === FUNGSI LOGOUT YANG BARU ===
+exports.logout = async (req, res) => {
+  try {
+    // 1. Ambil refreshToken dari cookie yang masuk
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      // Jika tidak ada token, anggap sudah logout
+      return res.sendStatus(204); // 204 = No Content
+    }
+
+    // 2. Cari user di DB yang memiliki token tersebut
+    const user = await User.findOne({
+      where: { refresh_token: refreshToken },
+    });
+
+    // 3. Jika user ditemukan, hapus tokennya dari DB
+    if (user) {
+      await user.update({ refresh_token: null });
+    }
+
+    // 4. Hapus cookie dari browser
+    res.clearCookie("refreshToken", COOKIE_OPTIONS);
+
+    // 5. Kirim respons sukses
+    return res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }

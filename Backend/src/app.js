@@ -13,9 +13,12 @@ const taskSubmissionRouter = require("./routes/taskSubmissions");
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(cors({
-    origin: 'http://localhost:3000'
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
