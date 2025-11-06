@@ -90,6 +90,13 @@ exports.createTaskSubmission = async (req, res) => {
     }
 
     const { user_id, task_id } = req.body;
+
+    if (!user_id || !task_id) {
+      return res.status(400).json({
+        message: "Field user_id dan task_id wajib diisi.",
+      });
+    }
+
     const taskSubmission = await TaskSubmission.create({
       user_id,
       task_id,
@@ -97,27 +104,41 @@ exports.createTaskSubmission = async (req, res) => {
       deadline: task.deadline,
     });
     res.status(201).json(taskSubmission);
-  } catch {
+  } catch (error) {
+    // Error validasi Sequelize
     if (error instanceof ValidationError) {
-      res.status(400).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(400).json({ message: error.message });
     }
+
+    // Error foreign key (MySQL)
+    if (error.original && error.original.code === "ER_NO_REFERENCED_ROW_2") {
+      return res.status(400).json({
+        message: `Gagal membuat task submission: user dengan ID ${req.body.user_id} tidak ditemukan.`,
+        hint: "Pastikan user_id yang dikirim ada di tabel Users.",
+      });
+    }
+
+    console.error("Error creating task submission:", error);
+    res.status(500).json({
+      message: "Terjadi kesalahan pada server.",
+    });
   }
 };
 
 exports.updateTaskSubmission = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id, task_id } = req.body;
+    const { user_id } = req.body;
     const taskSubmission = await TaskSubmission.findByPk(id);
     if (!taskSubmission) {
       return res.status(404).json({ message: "Task submission not found" });
     }
     if (user_id !== undefined) taskSubmission.user_id = user_id;
-    if (task_id !== undefined) taskSubmission.task_id = task_id;
     await taskSubmission.save();
-    res.status(200).json({ message: "Task submission updated successfully" });
+    res.status(200).json({
+      message: "Task submission updated successfully",
+      data: taskSubmission,
+    });
   } catch (error) {
     if (error instanceof ValidationError) {
       res.status(400).json({ message: error.message });
@@ -164,7 +185,10 @@ exports.submitTask = async (req, res) => {
     taskSubmission.status = "submitted";
     taskSubmission.submitted_at = new Date();
     await taskSubmission.save();
-    res.status(200).json({ message: "Task submission updated successfully" });
+    res.status(200).json({
+      message: "Task submission updated successfully",
+      data: taskSubmission,
+    });
   } catch (error) {
     if (error instanceof ValidationError) {
       res.status(400).json({ message: error.message });

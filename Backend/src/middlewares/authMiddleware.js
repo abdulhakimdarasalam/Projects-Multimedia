@@ -1,3 +1,11 @@
+// Opsi cookie yang konsisten
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.IS_PRODUCTION === "true",
+  sameSite: "strict",
+  path: "/",
+};
+
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 
@@ -73,6 +81,11 @@ exports.autoRefreshToken = async (err, req, res, next) => {
           process.env.JWT_SECRET,
           { expiresIn: "15m" }
         );
+
+        res.cookie("refreshToken", newRefreshToken, {
+          ...COOKIE_OPTIONS,
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
         // Kirim access token baru ke client
         res.setHeader("x-access-token", newAccessToken);

@@ -8,7 +8,12 @@ const {
   autoRefreshToken,
 } = require("../middlewares/authMiddleware");
 
-router.get("/:id", taskController.getAllTasksByProjectId);
+router.get(
+  "/:id",
+  verifyToken,
+  autoRefreshToken,
+  taskController.getAllTasksByProjectId
+);
 router.post(
   "/",
   verifyToken,

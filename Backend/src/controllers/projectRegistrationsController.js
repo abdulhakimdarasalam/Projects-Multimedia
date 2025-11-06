@@ -1,4 +1,4 @@
-const { Project, User,ProjectRegistration } = require("../models");
+const { Project, User, ProjectRegistration } = require("../models");
 const { ValidationError } = require("sequelize");
 
 // Ambil data project registrations dengan filter status
@@ -107,7 +107,10 @@ exports.acceptRegistration = async (req, res) => {
     }
 
     await registration.update({ status: "accepted" });
-    res.status(200).json({ message: "Pendaftaran diterima." });
+    res.status(200).json({
+      message: "Pendaftaran diterima.",
+      data: registration,
+    });
   } catch {
     console.error("Error accepting project registration:", error);
     res.status(500).json({
@@ -118,8 +121,25 @@ exports.acceptRegistration = async (req, res) => {
 
 exports.rejectRegistration = async (req, res) => {
   try {
+    if (!req.body) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Body request tidak ditemukan. Pastikan Content-Type: application/json dan body dikirim dengan benar.",
+        });
+    }
+
     const { id } = req.params;
     const { rejection_reason } = req.body;
+
+    // Pastikan rejection_reason ada
+    if (!rejection_reason) {
+      return res
+        .status(400)
+        .json({ message: "Alasan penolakan (rejection_reason) wajib diisi." });
+    }
+
     const registration = await ProjectRegistration.findByPk(id);
 
     if (!registration) {
@@ -131,7 +151,7 @@ exports.rejectRegistration = async (req, res) => {
       rejection_reason,
     });
     res.status(200).json({ message: "Pendaftaran ditolak." });
-  } catch {
+  } catch (error) {
     console.error("Error rejecting project registration:", error);
     res.status(500).json({
       message: "Terjadi kesalahan pada server.",

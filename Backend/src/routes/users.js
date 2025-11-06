@@ -15,6 +15,5 @@ router.get(
   autoRefreshToken,
   usersController.getAllUsers
 );
-router.post("/", usersController.createUser);
 
 module.exports = router;
