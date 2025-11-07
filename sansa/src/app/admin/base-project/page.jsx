@@ -1,28 +1,104 @@
 "use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { MOCK_ADMIN_BASE_PROJECTS } from '@/data/mockAdminBaseProjects';
-import { HiOutlinePencil, HiOutlineUserAdd, HiOutlineTrash } from 'react-icons/hi';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import {
+  HiOutlinePencil,
+  HiOutlineUserAdd,
+  HiOutlineTrash,
+} from "react-icons/hi";
 
+// Helper untuk status
 const getStatusClass = (status) => {
   switch (status) {
-    case 'In Progress': return 'bg-yellow-100 text-yellow-800';
-    case 'Not Started': return 'bg-gray-100 text-gray-800';
-    case 'Completed': return 'bg-green-100 text-green-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case "In Progress":
+      return "bg-yellow-100 text-yellow-800";
+    case "Not Started":
+      return "bg-gray-100 text-gray-800";
+    case "Completed":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+// Helper untuk format tanggal
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  try {
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
+  } catch (error) {
+    console.error("Invalid date string:", dateString);
+    return "Invalid Date";
   }
 };
 
 export default function AdminBaseProjectPage() {
   const router = useRouter();
-  const projects = MOCK_ADMIN_BASE_PROJECTS;
+
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // useEffect untuk fetch data
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+
+        if (!token) {
+          setError("Akses ditolak. Anda belum login.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get("http://localhost:4000/projects", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setProjects(response.data);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+
+        if (err.response && err.response.status === 401) {
+          setError("Sesi Anda telah berakhir. Silakan login kembali.");
+        } else {
+          setError("Gagal memuat data project.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [router]);
 
   const handleRowClick = (projectId) => {
-    // 👇 PERUBAHAN 2: Sesuaikan path ke folder 'add-task'
     router.push(`/admin/base-project/${projectId}/task`);
   };
 
+  // Tampilkan status Loading
+  if (loading) {
+    return <div className="p-10 text-center">Memuat project...</div>;
+  }
+
+  // Tampilkan status Error
+  if (error) {
+    return <div className="p-10 text-center text-red-600">Error: {error}</div>;
+  }
+
+  // Tampilan utama
   return (
     <div className="space-y-8">
       {/* Header Halaman */}
@@ -34,8 +110,7 @@ export default function AdminBaseProjectPage() {
       {/* Tombol Tambah Project */}
       <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
         <p className="text-gray-600">Tambah Project baru</p>
-        <Link 
-          // 👇 PERUBAHAN 1: Sesuaikan path ke folder 'add-project'
+        <Link
           href="/admin/base-project/add-project"
           className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
         >
@@ -49,9 +124,15 @@ export default function AdminBaseProjectPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="p-4 w-12"><input type="checkbox" className="rounded border-gray-300" /></th>
-                <th className="p-4 font-semibold text-gray-600">Nama Project</th>
-                <th className="p-4 font-semibold text-gray-600">Tanggal mulai</th>
+                <th className="p-4 w-12">
+                  <input type="checkbox" className="rounded border-gray-300" />
+                </th>
+                <th className="p-4 font-semibold text-gray-600">
+                  Nama Project
+                </th>
+                <th className="p-4 font-semibold text-gray-600">
+                  Tanggal mulai
+                </th>
                 <th className="p-4 font-semibold text-gray-600">Deadline</th>
                 <th className="p-4 font-semibold text-gray-600">Status</th>
                 <th className="p-4 font-semibold text-gray-600">Aksi</th>
@@ -59,27 +140,46 @@ export default function AdminBaseProjectPage() {
             </thead>
             <tbody className="divide-y">
               {projects.map((project) => (
-                <tr 
-                  key={project.id} 
+                <tr
+                  key={project.id}
                   className="hover:bg-gray-100 cursor-pointer transition-colors"
                   onClick={() => handleRowClick(project.id)}
                 >
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                    />
                   </td>
-                  <td className="p-4 font-medium text-gray-800">{project.name}</td>
-                  <td className="p-4 text-gray-600">{project.startDate}</td>
-                  <td className="p-4 text-gray-600">{project.deadline}</td>
+                  <td className="p-4 font-medium text-gray-800">
+                    {project.title}
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    {formatDate(project.start_date)}
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    {formatDate(project.end_date)}
+                  </td>
                   <td className="p-4">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClass(project.status)}`}>
-                      {project.status}
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClass(
+                        project.status
+                      )}`}
+                    >
+                      {project.status || "Not Started"}
                     </span>
                   </td>
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
-                      <button className="rounded p-2 text-green-600 hover:bg-green-100"><HiOutlinePencil className="h-4 w-4" /></button>
-                      <button className="rounded p-2 text-blue-600 hover:bg-blue-100"><HiOutlineUserAdd className="h-4 w-4" /></button>
-                      <button className="rounded p-2 text-red-600 hover:bg-red-100"><HiOutlineTrash className="h-4 w-4" /></button>
+                      <button className="rounded p-2 text-green-600 hover:bg-green-100">
+                        <HiOutlinePencil className="h-4 w-4" />
+                      </button>
+                      <button className="rounded p-2 text-blue-600 hover:bg-blue-100">
+                        <HiOutlineUserAdd className="h-4w-4" />
+                      </button>
+                      <button className="rounded p-2 text-red-600 hover:bg-red-100">
+                        <HiOutlineTrash className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
