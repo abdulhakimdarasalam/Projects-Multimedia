@@ -174,9 +174,6 @@ export default function AdminBaseProjectPage() {
                       <button className="rounded p-2 text-green-600 hover:bg-green-100">
                         <HiOutlinePencil className="h-4 w-4" />
                       </button>
-                      <button className="rounded p-2 text-blue-600 hover:bg-blue-100">
-                        <HiOutlineUserAdd className="h-4w-4" />
-                      </button>
                       <button className="rounded p-2 text-red-600 hover:bg-red-100">
                         <HiOutlineTrash className="h-4 w-4" />
                       </button>
