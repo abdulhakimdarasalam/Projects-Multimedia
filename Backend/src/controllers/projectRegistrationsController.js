@@ -72,7 +72,7 @@ exports.getMyProjects = async (req, res) => {
     // Ambil semua project milik user tersebut
     const projects = await ProjectRegistration.findAll({
       where: { user_id: userId },
-      include: [{ model: Project, as: "Project" }],
+      include: [{ model: Project }],
     });
 
     // Jika tidak ada project
