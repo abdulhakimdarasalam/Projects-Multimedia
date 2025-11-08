@@ -19,33 +19,72 @@ const navItems = [
   { name: "Profile", href: "/user/profile", icon: HiOutlineUser },
 ];
 
+// Tentukan Base URL API di sini juga
+const API_BASE_URL = "http://localhost:4000";
+
 export default function Sidebar({ isOpen, toggleSidebar }) {
   const pathname = usePathname();
   // 2. Inisialisasi router
   const router = useRouter();
 
-  // 3. Tambahkan fungsi handleLogout (tanpa 'confirm' atau 'alert')
+  // 3. Tambahkan fungsi untuk mengambil token
+  const getAuthToken = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accessToken");
+    }
+    return null;
+  };
+
+  // 4. Perbaiki fungsi handleLogout
   const handleLogout = async () => {
+    const token = getAuthToken();
+
     try {
       // Panggil API backend untuk logout
-      const response = await fetch("http://localhost:4000/auth/logout", {
-        method: "POST",
-        credentials: "include", // PENTING: Agar cookie refreshToken terkirim
-      });
+      // Hanya panggil API jika ada token
+      if (token) {
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          credentials: "include", // Tetap pakai ini jika backend butuh cookie (refreshToken)
 
-      // Hapus accessToken dari localStorage (asumsi Anda menyimpannya di sini)
+          // ==========================================================
+          // INI PERBAIKAN UTAMANYA
+          // ==========================================================
+          headers: {
+            "Content-Type": "application/json",
+            // Kirim 'accessToken' sebagai Bearer Token
+            // Ini yang diminta oleh error "Token tidak ditemukan di header Authorization"
+            Authorization: `Bearer ${token}`,
+          },
+          // ==========================================================
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          // Catat error dari server, tapi jangan hentikan proses logout
+          console.warn(
+            "Server logout error:",
+            errorData.message || "Logout failed"
+          );
+        } else {
+          console.log("Berhasil logout dari server.");
+        }
+      }
+    } catch (error) {
+      // Catat error network, tapi jangan hentikan proses logout
+      console.error("Logout API error:", error);
+    } finally {
+      // ==========================================================
+      // PINDAHKAN LOGIKA PENTING KE 'FINALLY'
+      // ==========================================================
+      // Ini akan SELALU dijalankan, baik API-nya berhasil, gagal, atau tidak ada token.
+
+      // 1. Hapus accessToken dari localStorage
       localStorage.removeItem("accessToken");
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Logout failed");
-      }
-
-      // Redirect ke halaman login setelah berhasil
+      // 2. Redirect ke halaman login setelah berhasil
+      // Pastikan URL login Anda benar
       router.push("/auth/login");
-    } catch (error) {
-      // Catat error di console, tapi jangan gunakan 'alert'
-      console.error("Logout error:", error);
     }
   };
 
@@ -98,7 +137,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
           ))}
         </nav>
 
-        {/* 4. Implementasi Tombol Logout */}
+        {/* 5. Implementasi Tombol Logout (Kode Anda sudah benar) */}
         <div className="mt-6">
           {/* Ganti <div> dengan <button> dan tambahkan onClick */}
           <button
