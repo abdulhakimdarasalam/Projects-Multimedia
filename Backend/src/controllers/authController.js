@@ -1,6 +1,7 @@
 const { User } = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { addToBlacklist } = require("../utils/blacklistToken");
 
 // Logika 'secure' cookie yang dinamis
 // 'true' jika di production, 'false' jika di development (misal: localhost)
@@ -107,6 +108,15 @@ exports.logout = async (req, res) => {
   try {
     // 1. Ambil refreshToken dari cookie yang masuk
     const refreshToken = req.cookies.refreshToken;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res
+        .status(400)
+        .json({ message: "Token tidak ditemukan di header Authorization." });
+    }
+
+    const token = authHeader.split(" ")[1];
+    addToBlacklist(token);
 
     if (!refreshToken) {
       // Jika tidak ada token, anggap sudah logout

@@ -8,6 +8,7 @@ const COOKIE_OPTIONS = {
 
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
+const { isBlacklisted } = require("../utils/blacklistToken");
 
 exports.verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -19,6 +20,13 @@ exports.verifyToken = (req, res, next) => {
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Invalid authorization header" });
+  }
+
+  // Cek apakah token sudah diblacklist
+  if (isBlacklisted(token)) {
+    return res
+      .status(401)
+      .json({ message: "Token sudah tidak valid (logout atau diblacklist)." });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
