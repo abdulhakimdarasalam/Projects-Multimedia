@@ -14,7 +14,12 @@ router.get(
   autoRefreshToken,
   projectRegistrationsController.getAllProjectRegistrations
 );
-
+router.get(
+  "/my",
+  verifyToken,
+  autoRefreshToken,
+  projectRegistrationsController.getMyProjects
+);
 router.post(
   "/",
   verifyToken,

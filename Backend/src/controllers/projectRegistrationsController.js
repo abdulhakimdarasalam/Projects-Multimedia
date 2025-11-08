@@ -58,6 +58,38 @@ exports.getAllProjectRegistrations = async (req, res) => {
   }
 };
 
+exports.getMyProjects = async (req, res) => {
+  try {
+    // Ambil userId dari JWT payload (yang diisi oleh middleware verifyToken)
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: "User ID tidak ditemukan pada token." });
+    }
+
+    // Ambil semua project milik user tersebut
+    const projects = await ProjectRegistration.findAll({
+      where: { user_id: userId },
+    });
+
+    // Jika tidak ada project
+    if (projects.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Belum ada proyek yang dibuat oleh user ini." });
+    }
+
+    res.status(200).json(projects);
+  } catch (error) {
+    console.error("Error mengambil proyek user:", error);
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan saat mengambil proyek." });
+  }
+};
+
 exports.createProjectRegistration = async (req, res) => {
   try {
     const { project_id } = req.body;
@@ -122,12 +154,10 @@ exports.acceptRegistration = async (req, res) => {
 exports.rejectRegistration = async (req, res) => {
   try {
     if (!req.body) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Body request tidak ditemukan. Pastikan Content-Type: application/json dan body dikirim dengan benar.",
-        });
+      return res.status(400).json({
+        message:
+          "Body request tidak ditemukan. Pastikan Content-Type: application/json dan body dikirim dengan benar.",
+      });
     }
 
     const { id } = req.params;
