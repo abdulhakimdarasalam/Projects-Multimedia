@@ -1,13 +1,11 @@
-// src/app/user/base-project/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiChevronRight } from "react-icons/hi";
-import axios from "axios"; // <-- Impor axios
+import axios from "axios";
 
 // Impor komponen
 import BaseProjectCard from "@/components/baseproject/BaseProjectCard";
-import ActiveProjectCard from "@/components/myproject/MyProjectCard";
+import ActiveProjectCard from "@/components/myproject/MyProjectCard"; // Pastikan path ini benar
 
 // Tentukan Base URL API kamu
 const API_BASE_URL = "http://localhost:4000";
@@ -20,7 +18,6 @@ export default function BaseProjectPage() {
   const [myProjects, setMyProjects] = useState([]);
 
   // State untuk loading dan error
-  // Kita buat terpisah agar tiap tab punya state loading-nya sendiri
   const [isLoadingAll, setIsLoadingAll] = useState(true);
   const [isLoadingMine, setIsLoadingMine] = useState(true);
   const [errorAll, setErrorAll] = useState(null);
@@ -34,67 +31,119 @@ export default function BaseProjectPage() {
     return null;
   };
 
-  // 1. useEffect untuk mengambil data kedua tab saat komponen dimuat
-  useEffect(() => {
+  const fetchAllProjects = async () => {
     const token = getAuthToken();
     if (!token) {
       setErrorAll("Otentikasi gagal. Silakan login kembali.");
-      setErrorMine("Otentikasi gagal. Silakan login kembali.");
       setIsLoadingAll(false);
+      return;
+    }
+    const headers = { Authorization: `Bearer ${token}` };
+
+    try {
+      setIsLoadingAll(true);
+      const response = await axios.get(`${API_BASE_URL}/projects`, {
+        headers,
+      });
+
+      console.log("Data 'Semua Project' mentah:", response.data);
+      const projectsData = response.data.data || response.data;
+      setAllProjects(Array.isArray(projectsData) ? projectsData : []);
+      setErrorAll(null);
+    } catch (err) {
+      console.error("Gagal fetch 'Semua Project':", err);
+      setErrorAll("Gagal memuat data project.");
+    } finally {
+      setIsLoadingAll(false);
+    }
+  };
+
+  // --- Fetch "Project Saya" (DENGAN PERBAIKAN) ---
+  const fetchMyProjects = async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setErrorMine("Otentikasi gagal. Silakan login kembali.");
       setIsLoadingMine(false);
       return;
     }
-
     const headers = { Authorization: `Bearer ${token}` };
 
-    // --- Fetch "Semua Project" ---
-    const fetchAllProjects = async () => {
-      try {
-        setIsLoadingAll(true);
-        // ASUMSI: Endpoint adalah '/projects'
-        const response = await axios.get(`${API_BASE_URL}/projects`, {
-          headers,
-        });
+    try {
+      setIsLoadingMine(true);
 
-        console.log("Data 'Semua Project' mentah:", response.data);
-        // Sesuaikan .data.data jika perlu, seperti kemarin
-        setAllProjects(response.data.data || response.data);
-        setErrorAll(null);
-      } catch (err) {
-        console.error("Gagal fetch 'Semua Project':", err);
-        setErrorAll("Gagal memuat data project.");
-      } finally {
-        setIsLoadingAll(false);
-      }
-    };
+      const response = await axios.get(
+        `${API_BASE_URL}/project-registrations/my`,
+        { headers }
+      );
 
-    // --- Fetch "Project Saya" ---
-    const fetchMyProjects = async () => {
-      try {
-        setIsLoadingMine(true);
-        // ASUMSI: Endpoint adalah '/my-projects'
-        const response = await axios.get(`${API_BASE_URL}/my-projects`, {
-          headers,
-        });
-
-        console.log("Data 'Project Saya' mentah:", response.data);
-        // Sesuaikan .data.data jika perlu
-        setMyProjects(response.data.data || response.data);
+      // Menangani jika backend mengembalikan body kosong (bukan JSON array)
+      if (!response.data) {
+        console.warn(
+          "API 'Project Saya' mengembalikan body kosong, dianggap array kosong."
+        );
+        setMyProjects([]); // Langsung set array kosong
         setErrorMine(null);
-      } catch (err) {
-        console.error("Gagal fetch 'Project Saya':", err);
-        setErrorMine("Gagal memuat data project saya.");
-      } finally {
         setIsLoadingMine(false);
+        return; // Hentikan eksekusi fungsi
       }
-    };
 
-    // Panggil kedua fungsi
+      console.log("Data 'Project Saya' mentah:", response.data);
+      const rawData = response.data.data || response.data;
+
+      if (!Array.isArray(rawData)) {
+        console.warn("'Project Saya' - data bukan array:", rawData);
+        setMyProjects([]);
+        setErrorMine(null);
+        return;
+      }
+
+      // --- PERBAIKAN 1: FILTER DATA (Menggunakan .Project) ---
+      const validRegistrations = rawData.filter(
+        (registration) => registration && registration.Project // <-- UBAHAN DI SINI
+      );
+
+      if (validRegistrations.length === 0 && rawData.length > 0) {
+        console.warn(
+          "Data 'Project Saya' ada, tapi tidak ada 'Project' (P besar) yang ter-join." // <-- UBAHAN DI SINI
+        );
+      }
+
+      // --- PENYESUAIAN DATA (Menggunakan .Project) ---
+      const formattedProjects = validRegistrations.map((registration) => ({
+        id: registration.Project.id, // <-- UBAHAN DI SINI
+        // PERBAIKAN 2: Sesuaikan nama field
+        title: registration.Project.title, // <-- UBAHAN DI SINI
+        category: registration.Project.category || "N/A", // <-- UBAHAN DI SINI
+        status: registration.status,
+        // PERBAIKAN 2: Ambil 'start_date'
+        date: registration.Project.start_date || registration.Project.createdAt, // <-- UBAHAN DI SINI
+      }));
+
+      console.log("Data 'Project Saya' terformat:", formattedProjects);
+      setMyProjects(formattedProjects);
+      setErrorMine(null);
+    } catch (err) {
+      console.error("Gagal fetch 'Project Saya':", err);
+      // Ini akan menangkap error 404 dari Axios
+      if (err.response && err.response.status === 404) {
+        setErrorMine(
+          "Endpoint 'Project Saya' tidak ditemukan (404). Cek URL API."
+        );
+      } else {
+        setErrorMine("Gagal memuat data project saya.");
+      }
+    } finally {
+      setIsLoadingMine(false);
+    }
+  };
+
+  // 1. useEffect (Tidak Berubah)
+  useEffect(() => {
     fetchAllProjects();
     fetchMyProjects();
   }, []); // [] = Dijalankan sekali saat mount
 
-  // 2. Fungsi untuk 'Join Project' (dari screenshot kamu)
+  // 2. Fungsi untuk 'Join Project' (Tidak Berubah)
   const handleJoinProject = async (projectId) => {
     const token = getAuthToken();
     if (!token) {
@@ -103,7 +152,6 @@ export default function BaseProjectPage() {
     }
 
     try {
-      // Panggil API POST untuk registrasi project
       await axios.post(
         `${API_BASE_URL}/project-registrations/`,
         { project_id: projectId }, // Body payload
@@ -112,23 +160,22 @@ export default function BaseProjectPage() {
         }
       );
 
-      // Beri feedback ke user
       alert("Permintaan bergabung telah dikirim! Menunggu persetujuan admin.");
 
-      // Opsional: Kamu bisa update UI di sini,
-      // misal: disable tombol 'join' untuk project yg baru didaftar
+      // Panggil fetchMyProjects lagi untuk refresh data
+      fetchMyProjects();
+
+      // Opsional: Pindahkan user ke tab "Project Saya"
+      setActiveTab("mine");
     } catch (err) {
       console.error(`Gagal join project ${projectId}:`, err);
-      // Tangani error, misal jika user sudah pernah daftar
-      if (err.response && err.response.data && err.response.data.message) {
-        alert(`Gagal: ${err.response.data.message}`);
-      } else {
-        alert("Gagal mengirim permintaan bergabung.");
-      }
+      const message =
+        err.response?.data?.message || "Gagal mengirim permintaan bergabung.";
+      alert(`Gagal: ${message}`);
     }
   };
 
-  // --- Helper untuk render konten tab ---
+  // --- Helper untuk render konten tab (Tidak Berubah) ---
   const renderAllProjects = () => {
     if (isLoadingAll) return <p className="text-gray-500">Memuat project...</p>;
     if (errorAll) return <p className="text-red-600">{errorAll}</p>;
@@ -145,13 +192,14 @@ export default function BaseProjectPage() {
           <BaseProjectCard
             key={project.id}
             project={project}
-            onJoin={handleJoinProject} // <-- 3. Kirim fungsi 'join' ke Card
+            onJoin={handleJoinProject}
           />
         ))}
       </div>
     );
   };
 
+  // --- Helper untuk render konten tab (Tidak Berubah) ---
   const renderMyProjects = () => {
     if (isLoadingMine)
       return <p className="text-gray-500">Memuat project saya...</p>;
@@ -172,9 +220,10 @@ export default function BaseProjectPage() {
     );
   };
 
+  // --- JSX (Tidak Berubah) ---
   return (
     <div>
-      {/* Tabs (Tidak berubah) */}
+      {/* Tabs */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setActiveTab("all")}
@@ -201,7 +250,6 @@ export default function BaseProjectPage() {
       {/* Konten Dinamis Berdasarkan Tab */}
       <div className="mt-8">
         {activeTab === "all" ? (
-          // === TAMPILAN SEMUA PROJECT (GRID) ===
           <>
             <header>
               <h1 className="text-3xl font-bold text-gray-800">List Project</h1>
@@ -209,7 +257,6 @@ export default function BaseProjectPage() {
             {renderAllProjects()}
           </>
         ) : (
-          // === TAMPILAN PROJECT SAYA (LIST BARU) ===
           <>
             <header>
               <h1 className="text-3xl font-bold text-gray-800">
