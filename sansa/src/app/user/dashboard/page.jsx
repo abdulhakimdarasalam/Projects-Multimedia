@@ -1,40 +1,23 @@
-// src/app/user/dashboard/page.jsx
-
-// 1. WAJIB: Tambahkan "use client" di baris paling atas
 "use client";
 
-// 2. Impor hooks dan komponen
 import { useEffect } from "react";
 import StatCard from "@/components/dashboard/StatCard";
 import ProjectCard from "@/components/dashboard/ProjectCard";
-// import { DUMMY_PROJECTS } from "@/data/MockProjects"; // <-- Hapus ini
-
-// 3. Impor store Zustand dan instance Axios kita
-import { useDashboardUserStore } from "@/app/store/userDashboardStore"; // <-- Pastikan path ini benar
-import api from "@/lib/api"; // <-- Pastikan path ini benar
+import { useDashboardUserStore } from "@/app/store/userDashboardStore";
+import api from "@/lib/api";
 
 export default function DashboardPage() {
-  // 4. Hapus data dummy
-  // const projects = DUMMY_PROJECTS; // <-- Hapus ini
-
-  // 5. Ambil semua state dan action dari store Zustand
   const { profile, stats, projects, isLoading, error, fetchDashboardData } =
     useDashboardUserStore((state) => state);
 
-  // 6. Panggil API saat komponen pertama kali dimuat
   useEffect(() => {
-    // Panggil fungsi 'fetch' dari store,
-    // dan berikan instance 'api' kita sebagai parameter
     fetchDashboardData(api);
-  }, [fetchDashboardData]); // fetchDashboardData dijamin stabil oleh Zustand
+  }, [fetchDashboardData]);
 
-  // 7. Handle UI state (Loading)
-  // Ini penting agar UI tidak "loncat"
   if (isLoading) {
-    return <DashboardLoadingSkeleton />; // Tampilkan skeleton selagi loading
+    return <DashboardLoadingSkeleton />;
   }
 
-  // 8. Handle UI state (Error)
   if (error) {
     return (
       <div className="flex h-screen flex-col items-center justify-center">
@@ -49,15 +32,12 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  // 9. Tampilkan UI jika data berhasil dimuat
-  // Ini adalah JSX asli kamu, tapi dengan data dinamis
   return (
     <div>
       {/* Header (DINAMIS) */}
       <header>
         <h1 className="text-3xl font-bold text-gray-800">
-          Good Morning, {profile.name}! {/* <-- DATA DINAMIS */}
+          Halo, {profile.name}!
         </h1>
         <p className="mt-1 text-gray-500">Ayo lanjutkan progres tugasmu</p>
       </header>
@@ -98,9 +78,6 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-// (Opsional) Komponen Skeleton Loader
-// Kamu bisa tempel ini di bawah atau buat file terpisah
 const DashboardLoadingSkeleton = () => (
   <div className="animate-pulse">
     {/* Header Skeleton */}
