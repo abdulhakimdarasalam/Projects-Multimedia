@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link"; // <-- Di-impor kembali
+import { useEffect } from "react";
+import Link from "next/link";
 import { HiCheck, HiX } from "react-icons/hi";
 import axios from "axios";
+import { useJoinRequestStore } from "@/app/store/joinRequestStore";
 
-// Tentukan Base URL API kamu di satu tempat
 const API_BASE_URL = "http://localhost:4000";
 
 export default function JoinRequestPage() {
-  const [requests, setRequests] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // 👇 2. Ambil semua state dan fungsi dari store
+  const { requests, isLoading, error, fetchRequests, removeRequestById } =
+    useJoinRequestStore();
 
-  // Fungsi untuk mengambil token (asumsi disimpan di localStorage)
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
   const getAuthToken = () => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("accessToken");
@@ -21,42 +24,6 @@ export default function JoinRequestPage() {
     return null;
   };
 
-  // 1. Fungsi untuk mengambil data dari API
-  useEffect(() => {
-    const fetchRequests = async () => {
-      const token = getAuthToken();
-      if (!token) {
-        setError("Otentikasi tidak ditemukan. Silakan login kembali.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const response = await axios.get(
-          `${API_BASE_URL}/project-registrations`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        console.log("Data mentah dari API:", response.data);
-        setRequests(response.data.data.pending); // Ini sudah benar
-        setError(null);
-      } catch (err) {
-        console.error("Gagal mengambil data requests:", err);
-        setError("Gagal memuat data. Coba lagi nanti.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRequests();
-  }, []);
-
-  // 2. Fungsi untuk menangani 'accept' (Tidak berubah)
   const handleAccept = async (requestId) => {
     const token = getAuthToken();
     if (!token) {
@@ -67,7 +34,7 @@ export default function JoinRequestPage() {
     try {
       await axios.put(
         `${API_BASE_URL}/project-registrations/${requestId}/accept`,
-        {},
+        {}, // Body kosong
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,20 +42,13 @@ export default function JoinRequestPage() {
         }
       );
 
-      // Jika berhasil, update UI
-      setRequests((currentRequests) =>
-        currentRequests.filter((req) => req.id !== requestId)
-      );
+      removeRequestById(requestId);
       console.log(`Accepted request with ID: ${requestId}`);
     } catch (err) {
       console.error(`Gagal menerima request ${requestId}:`, err);
       alert("Gagal memproses permintaan. Coba lagi.");
     }
   };
-
-  // Fungsi handleReject dihapus, karena kita kembali pakai Link
-
-  // --- Render Logic ---
 
   if (isLoading) {
     return (
@@ -138,25 +98,16 @@ export default function JoinRequestPage() {
               ) : (
                 requests.map((request) => (
                   <tr key={request.id} className="hover:bg-gray-50">
-                    {/* ===== INI BAGIAN YANG DIPERBAIKI ===== */}
-
                     <td className="p-4 font-medium text-gray-800">
-                      {/* Gunakan 'User' (U kapital) */}
-                      {request.User ? request.User.name : "Data User Hilang"}
+                      {request.User ? request.User.name : "N/A"}
                     </td>
                     <td className="p-4 text-gray-600">
-                      {/* Gunakan 'User' (U kapital) */}
-                      {request.User ? request.User.email : "Data User Hilang"}
+                      {request.User ? request.User.email : "N/A"}
                     </td>
                     <td className="p-4 text-gray-600">
-                      {/* Gunakan 'Project' (P kapital) dan '.title' */}
-                      {/* 'Project' akan null sampai backend diperbaiki */}
-                      {request.Project
-                        ? request.Project.title
-                        : "Data Project (null)"}
+                      {request.Project ? request.Project.title : "N/A"}
                     </td>
                     <td className="p-4 text-gray-600">
-                      {/* Gunakan 'createdAt' dari data JSON */}
                       {new Date(request.createdAt).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "long",
@@ -172,8 +123,6 @@ export default function JoinRequestPage() {
                           <HiCheck className="h-4 w-4" />
                           accept
                         </button>
-
-                        {/* DIKEMBALIKAN MENJADI <Link> SESUAI LOGIKA 'rejection_reason' */}
                         <Link
                           href={`/admin/join-request/reject/${request.id}`}
                           className="flex items-center gap-1 rounded-md bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-200"
@@ -183,7 +132,6 @@ export default function JoinRequestPage() {
                         </Link>
                       </div>
                     </td>
-                    {/* ===== AKHIR BAGIAN PERBAIKAN ===== */}
                   </tr>
                 ))
               )}
