@@ -1,8 +1,6 @@
 const { Project, User, ProjectRegistration } = require("../models");
 const { ValidationError } = require("sequelize");
 
-// Ambil data project registrations dengan filter status
-// Contoh di fe: GET /project-registrations?status=all/pending/accepted/rejected
 exports.getAllProjectRegistrations = async (req, res) => {
   try {
     const { status } = req.query; // Ambil query param 'status' (opsional)
@@ -58,6 +56,7 @@ exports.getAllProjectRegistrations = async (req, res) => {
   }
 };
 
+// (FUNGSI INI SUDAH BENAR - TIDAK DIUBAH)
 exports.getMyProjects = async (req, res) => {
   try {
     // Ambil userId dari JWT payload (yang diisi oleh middleware verifyToken)
@@ -91,6 +90,7 @@ exports.getMyProjects = async (req, res) => {
   }
 };
 
+// (FUNGSI INI SUDAH BENAR - TIDAK DIUBAH)
 exports.createProjectRegistration = async (req, res) => {
   try {
     const { project_id } = req.body;
@@ -130,6 +130,7 @@ exports.createProjectRegistration = async (req, res) => {
   }
 };
 
+// --- (INI FUNGSI YANG DIPERBAIKI) ---
 exports.acceptRegistration = async (req, res) => {
   try {
     const { id } = req.params;
@@ -139,12 +140,36 @@ exports.acceptRegistration = async (req, res) => {
       return res.status(404).json({ message: "Pendaftaran tidak ditemukan." });
     }
 
-    await registration.update({ status: "accepted" });
+    // Tambahan: Cek jika sudah di-accept
+    if (registration.status === "accepted") {
+      return res
+        .status(200)
+        .json({ message: "Member sudah diterima sebelumnya." });
+    }
+
+    // 1. Update registrasi
+    await registration.update({
+      status: "accepted",
+      rejection_reason: null,
+    });
+
+    // --- LOGIKA TRIGGER DIMULAI ---
+
+    const projectId = registration.project_id;
+
+    const project = await Project.findByPk(projectId);
+
+    if (project && project.status === "pending") {
+      await project.update({ status: "ongoing" });
+      console.log(`LOG: Project ${project.id} di-update menjadi 'ongoing'`);
+    }
+
     res.status(200).json({
-      message: "Pendaftaran diterima.",
+      message: "Pendaftaran diterima. Status project diperbarui (jika perlu).",
       data: registration,
     });
-  } catch {
+  } catch (error) {
+    // <-- Perbaikan: 'catch' harus 'catch (error)'
     console.error("Error accepting project registration:", error);
     res.status(500).json({
       message: "Terjadi kesalahan pada server.",
@@ -152,6 +177,7 @@ exports.acceptRegistration = async (req, res) => {
   }
 };
 
+// (FUNGSI INI SUDAH BENAR - TIDAK DIUBAH)
 exports.rejectRegistration = async (req, res) => {
   try {
     if (!req.body) {

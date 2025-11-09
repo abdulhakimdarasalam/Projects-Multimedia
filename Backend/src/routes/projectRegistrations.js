@@ -1,5 +1,4 @@
 const express = require("express");
-
 const router = express.Router();
 const projectRegistrationsController = require("../controllers/projectRegistrationsController");
 const {
@@ -27,14 +26,15 @@ router.post(
   projectRegistrationsController.createProjectRegistration
 );
 
-router.put(
+router.patch(
   "/:id/accept",
   verifyToken,
   isAdmin,
   autoRefreshToken,
   projectRegistrationsController.acceptRegistration
 );
-router.put(
+
+router.patch(
   "/:id/reject",
   verifyToken,
   isAdmin,
