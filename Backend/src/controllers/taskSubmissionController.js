@@ -181,7 +181,14 @@ exports.submitTask = async (req, res) => {
         .json({ message: "Task submission has already been submitted" });
     }
 
-    if (content !== undefined) taskSubmission.content = content;
+    let finalContent = content; // default teks
+
+    // Jika upload file
+    if (req.file) {
+      finalContent = `/uploads/tasks/${req.file.filename}`;
+    }
+
+    taskSubmission.content = finalContent;
     taskSubmission.status = "submitted";
     taskSubmission.submitted_at = new Date();
     await taskSubmission.save();

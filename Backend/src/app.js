@@ -24,6 +24,8 @@ const dashboardUserRoutes = require("./routes/dashboardUserRoutes");
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/uploads", express.static("uploads"));
+
 app.use(
   cors({
     origin: "http://localhost:3000",

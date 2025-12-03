@@ -8,6 +8,9 @@ const {
   autoRefreshToken,
 } = require("../middlewares/authMiddleware");
 
+const upload = require("../middlewares/upload");
+const prepareUploadMeta = require("../middlewares/prepareUploadMeta");
+
 router.get(
   "/:id",
   verifyToken,
@@ -50,6 +53,8 @@ router.put(
   "/:id/submit",
   verifyToken,
   autoRefreshToken,
+  prepareUploadMeta,
+  upload.single("content"),
   taskSubmissionController.submitTask
 );
 
