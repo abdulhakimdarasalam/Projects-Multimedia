@@ -26,7 +26,7 @@ router.post(
   projectRegistrationsController.createProjectRegistration
 );
 
-router.patch(
+router.put(
   "/:id/accept",
   verifyToken,
   isAdmin,
@@ -34,7 +34,7 @@ router.patch(
   projectRegistrationsController.acceptRegistration
 );
 
-router.patch(
+router.put(
   "/:id/reject",
   verifyToken,
   isAdmin,
