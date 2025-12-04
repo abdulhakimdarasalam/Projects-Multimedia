@@ -14,18 +14,19 @@ sequelize.sync({}).then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
   console.log("Scheduler pengecekan deadline project telah aktif.");
-
-  cron.schedule("0 0 * * *", async () => {
+  // Function to check and update projects past their deadline
+  const runProjectDeadlineCheck = async () => {
     console.log(
       "CRON JOB: Mulai mengecek project yang sudah lewat deadline..."
     );
-
     try {
       const [updatedCount] = await Project.update(
         { status: "completed" },
         {
           where: {
-            status: "ongoing",
+            status: {
+              [Op.in]: ["pending", "ongoing"],
+            },
             end_date: {
               [Op.lt]: sequelize.fn("CURDATE"),
             },
@@ -41,7 +42,13 @@ sequelize.sync({}).then(() => {
         console.log("CRON JOB: Tidak ada project yang perlu di-update.");
       }
     } catch (error) {
-      console.error("CRON JOB ERROR:", error.message);
+      console.error("CRON JOB ERROR:", error.message || error);
     }
-  });
+  };
+
+  // Run once on startup
+  runProjectDeadlineCheck();
+
+  // Schedule to run daily at midnight
+  cron.schedule("0 0 * * *", runProjectDeadlineCheck);
 });
