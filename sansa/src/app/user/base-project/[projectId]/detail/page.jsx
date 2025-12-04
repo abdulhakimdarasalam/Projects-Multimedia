@@ -147,7 +147,8 @@ export default function ProjectTasksPageClient() {
 
               <div className="flex-shrink-0 ml-4">
                 <Link
-                  href={`/user/base-project/submission/${projectId}?taskId=${task.id}`}
+                  href={`/user/base-project/${projectId}/detail/submission?taskId=${task.id}`}
+                  prefetch={false}
                 >
                   <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                     Lihat & Submit ↗️
