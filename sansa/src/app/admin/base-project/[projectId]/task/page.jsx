@@ -10,6 +10,7 @@ import {
   HiOutlinePencil,
   HiOutlineUserAdd,
   HiOutlineTrash,
+  HiOutlineCheckCircle,
 } from "react-icons/hi";
 
 // Helper untuk format tanggal (tetap sama)
@@ -152,6 +153,13 @@ export default function ProjectTaskPage() {
                   <td className="p-4 text-gray-600">{task.value_weight}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/base-project/${projectId}/task/review?taskId=${task.id}`}
+                        className="rounded p-2 text-blue-600 hover:bg-blue-100 transition"
+                        title="Review Submissions"
+                      >
+                        <HiOutlineCheckCircle className="h-4 w-4" />
+                      </Link>
                       <button className="rounded p-2 text-green-600 hover:bg-green-100">
                         <HiOutlinePencil className="h-4 w-4" />
                       </button>
