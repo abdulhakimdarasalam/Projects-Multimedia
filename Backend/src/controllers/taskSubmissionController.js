@@ -17,6 +17,45 @@ exports.getTaskSubmissionById = async (req, res) => {
   }
 };
 
+// Ambil semua task submission untuk sebuah task (for admin review)
+exports.getAllTaskSubmissionsByTaskId = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { status } = req.query; // Optional filter by status
+
+    const whereClause = { task_id: taskId };
+
+    // Filter by status jika ada
+    if (status && status !== "all") {
+      whereClause.status = status;
+    }
+
+    const taskSubmissions = await TaskSubmission.findAll({
+      where: whereClause,
+      include: [
+        { model: User, as: "User" },
+        { model: Task, as: "Task" },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: req.query.limit ? parseInt(req.query.limit) : 100,
+      offset: req.query.offset ? parseInt(req.query.offset) : 0,
+    });
+
+    res.status(200).json({
+      data: taskSubmissions,
+      total: taskSubmissions.length,
+      status: status || "all",
+    });
+  } catch (error) {
+    console.error("Error in getAllTaskSubmissionsByTaskId:", error);
+    if (error instanceof ValidationError) {
+      res.status(400).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+};
+
 // Ambil semua task submission berdasarkan user_id dengan filter status
 // Contoh di fe: GET /users/123/task-submissions?status=pending/all/approved/rejected
 exports.getAllTaskSubmissionsByUserId = async (req, res) => {
@@ -67,6 +106,79 @@ exports.getAllTaskSubmissionsByUserId = async (req, res) => {
     } else {
       res.status(500).json({ message: "Internal server error" });
     }
+  }
+};
+
+// Auto-create submission for current user (non-admin endpoint)
+// User can create their own submission for a task they want to submit.
+// If submission already exists, return the existing one.
+exports.autoCreateTaskSubmission = async (req, res) => {
+  try {
+    const { task_id } = req.body;
+    const user_id = req.user?.id; // From verifyToken middleware
+
+    if (!task_id) {
+      return res.status(400).json({
+        message: "Field task_id wajib diisi.",
+      });
+    }
+
+    if (!user_id) {
+      return res.status(401).json({
+        message: "User tidak terautentikasi. Silakan login ulang.",
+      });
+    }
+
+    // Check if task exists
+    const task = await Task.findByPk(task_id);
+    if (!task) {
+      return res.status(404).json({ message: "Task tidak ditemukan." });
+    }
+
+    // Check if submission already exists for this user+task
+    const existingSubmission = await TaskSubmission.findOne({
+      where: {
+        user_id,
+        task_id,
+      },
+    });
+
+    if (existingSubmission) {
+      // Already exists, return it
+      return res.status(200).json({
+        message: "Submission sudah ada, mengembalikan submission existing.",
+        data: existingSubmission,
+      });
+    }
+
+    // Create new submission
+    const taskSubmission = await TaskSubmission.create({
+      user_id,
+      task_id,
+      start_date: task.start_date,
+      deadline: task.deadline,
+      status: "pending", // Initial status
+    });
+
+    res.status(201).json({
+      message: "Submission berhasil dibuat.",
+      data: taskSubmission,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    if (error.original && error.original.code === "ER_NO_REFERENCED_ROW_2") {
+      return res.status(400).json({
+        message: "Gagal membuat submission: Task atau User tidak ditemukan.",
+      });
+    }
+
+    console.error("Error in autoCreateTaskSubmission:", error);
+    res.status(500).json({
+      message: "Terjadi kesalahan pada server saat membuat submission.",
+    });
   }
 };
 

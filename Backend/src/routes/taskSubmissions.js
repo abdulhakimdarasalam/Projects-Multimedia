@@ -25,12 +25,29 @@ router.get(
   taskSubmissionController.getAllTaskSubmissionsByUserId
 );
 
+// Get all submissions for a specific task (admin review)
+router.get(
+  "/by-task/:taskId",
+  verifyToken,
+  autoRefreshToken,
+  taskSubmissionController.getAllTaskSubmissionsByTaskId
+);
+
 router.post(
   "/",
   verifyToken,
   isAdmin,
   autoRefreshToken,
   taskSubmissionController.createTaskSubmission
+);
+
+// Auto-create submission for user (non-admin). User can create their own submission
+// for a task they want to submit. If already exists, returns existing one.
+router.post(
+  "/auto-create",
+  verifyToken,
+  autoRefreshToken,
+  taskSubmissionController.autoCreateTaskSubmission
 );
 
 router.put(
