@@ -12,10 +12,14 @@ export default function SubmissionPage() {
   const [task, setTask] = useState(null);
   const [loadingTask, setLoadingTask] = useState(true);
   const [taskError, setTaskError] = useState(null);
+  const [submission, setSubmission] = useState(null);
+  const [loadingSubmission, setLoadingSubmission] = useState(true);
   const [url, setUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState("info");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [submitMode, setSubmitMode] = useState(null); // 'file' or 'url'
 
   const fileInputRef = useRef(null);
 
@@ -67,67 +71,199 @@ export default function SubmissionPage() {
     fetchTask();
   }, [taskId]);
 
+  // Cari TaskSubmission untuk user saat kita punya taskId
+  useEffect(() => {
+    if (!taskId) {
+      setLoadingSubmission(false);
+      return;
+    }
+
+    const fetchSubmission = async () => {
+      try {
+        setLoadingSubmission(true);
+
+        // Ambil profile user untuk dapatkan userId
+        const meRes = await api.get("/api/auth/me");
+        const user =
+          meRes.data?.data || meRes.data || meRes.data?.user || meRes.data;
+        const userId = user?.id;
+
+        if (!userId) {
+          setSubmission(null);
+          return;
+        }
+
+        // Ambil semua submission user, lalu cari yang sesuai task_id
+        const res = await api.get(
+          `/task-submissions/user/${userId}?status=all`
+        );
+        const list = res.data?.data || res.data || [];
+
+        const found = Array.isArray(list)
+          ? list.find((s) => String(s.task_id) === String(taskId))
+          : null;
+
+        if (found) {
+          setSubmission(found);
+        } else {
+          setSubmission(null);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil task submission:", err);
+        setSubmission(null);
+      } finally {
+        setLoadingSubmission(false);
+      }
+    };
+
+    fetchSubmission();
+  }, [taskId]);
+
+  // Get or auto-create TaskSubmission for this user+task.
+  // First, try to find existing submission.
+  // If not found, auto-create via POST /task-submissions/auto-create endpoint.
+  const ensureSubmissionExists = async () => {
+    try {
+      // If we already have submission in state with ID, use it
+      if (submission?.id) return submission;
+
+      if (!taskId) {
+        throw new Error("Task ID tidak tersedia untuk membuat submission.");
+      }
+
+      // Try to get current user info for searching existing submissions
+      let userId = null;
+      try {
+        const meRes = await api.get("/api/auth/me");
+        const user =
+          meRes.data?.data || meRes.data || meRes.data?.user || meRes.data;
+        userId = user?.id;
+      } catch (e) {
+        console.error("Gagal mendapatkan info user:", e);
+        throw new Error("Gagal memverifikasi pengguna. Silakan login ulang.");
+      }
+
+      if (!userId) {
+        throw new Error("User ID tidak ditemukan. Silakan login ulang.");
+      }
+
+      // If we have userId, try to find existing submission for this user+task
+      if (userId) {
+        try {
+          const listRes = await api.get(
+            `/task-submissions/user/${userId}?status=all`
+          );
+          const list = listRes.data?.data || listRes.data || [];
+          const found = Array.isArray(list)
+            ? list.find((s) => String(s.task_id) === String(taskId))
+            : null;
+          if (found) {
+            setSubmission(found);
+            return found;
+          }
+        } catch (e) {
+          console.error("Gagal mencari existing submission:", e);
+          // Continue to auto-create
+        }
+      }
+
+      // No existing submission found. Auto-create via POST /task-submissions/auto-create
+      try {
+        const createRes = await api.post("/task-submissions/auto-create", {
+          task_id: taskId,
+        });
+        const created = createRes.data?.data || createRes.data;
+        setSubmission(created);
+        return created;
+      } catch (err) {
+        console.error("Gagal auto-create submission:", err);
+        throw new Error(
+          err?.response?.data?.message ||
+            "Gagal membuat submission. Silakan coba lagi atau hubungi administrator."
+        );
+      }
+    } catch (err) {
+      console.error("ensureSubmissionExists error:", err);
+      throw err;
+    }
+  };
+
   const handleChooseFile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e) => {
+  // When user selects a file, just store it locally and set mode to 'file'.
+  // Upload happens when they click the bottom Upload button.
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setIsUploading(true);
+    setSelectedFile(file);
+    setSubmitMode("file");
+    setUrl("");
     setMessage(null);
-
-    try {
-      // Simple file upload using FormData. Backend must accept `/submissions` POST with multipart/form-data
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("project_id", projectId);
-      if (taskId) fd.append("task_id", taskId);
-      fd.append("submissionType", "file");
-
-      const res = await api.post("/submissions", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      setMessage("File submission berhasil dikirim.");
-      setMessageType("success");
-    } catch (err) {
-      console.error(err);
-      setMessage(
-        err?.response?.data?.message || "Gagal mengirim file submission."
-      );
-      setMessageType("error");
-    } finally {
-      setIsUploading(false);
-    }
   };
 
-  const handleSubmitUrl = async (e) => {
+  // Handle both file and URL submission via single button
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!url.trim()) return;
-
     setIsUploading(true);
     setMessage(null);
 
     try {
-      const payload = {
-        project_id: projectId,
-        submissionType: "url",
-        url: url.trim(),
-      };
-      if (taskId) payload.task_id = taskId;
+      let targetSubmission = submission;
+      if (!targetSubmission?.id) {
+        targetSubmission = await ensureSubmissionExists();
+      }
 
-      const res = await api.post("/submissions", payload);
+      if (submitMode === "file" && selectedFile) {
+        // Upload file
+        const fd = new FormData();
+        fd.append("content", selectedFile);
 
-      setMessage("URL submission berhasil dikirim.");
-      setMessageType("success");
-      setUrl("");
+        const res = await api.put(
+          `/task-submissions/${targetSubmission.id}/submit`,
+          fd
+        );
+
+        const updated = res.data?.data || res.data || targetSubmission;
+        setSubmission(updated);
+        setSelectedFile(null);
+        setSubmitMode(null);
+
+        setMessage("File submission berhasil dikirim.");
+        setMessageType("success");
+
+        // Redirect to base-project after 2 seconds
+        setTimeout(() => {
+          window.location.href = `/user/base-project/${projectId}`;
+        }, 2000);
+      } else if (submitMode === "url" && url.trim()) {
+        // Upload URL
+        const payload = { content: url.trim() };
+        const res = await api.put(
+          `/task-submissions/${targetSubmission.id}/submit`,
+          payload
+        );
+
+        const updated = res.data?.data || res.data || targetSubmission;
+        setSubmission(updated);
+        setUrl("");
+        setSubmitMode(null);
+
+        setMessage("URL submission berhasil dikirim.");
+        setMessageType("success");
+
+        // Redirect to base-project after 2 seconds
+        setTimeout(() => {
+          window.location.href = `/user/base-project/${projectId}`;
+        }, 2000);
+      } else {
+        setMessage("Pilih file atau masukkan URL terlebih dahulu.");
+        setMessageType("error");
+      }
     } catch (err) {
       console.error(err);
-      setMessage(
-        err?.response?.data?.message || "Gagal mengirim URL submission."
-      );
+      setMessage(err?.response?.data?.message || "Gagal mengirim submission.");
       setMessageType("error");
     } finally {
       setIsUploading(false);
@@ -218,6 +354,7 @@ export default function SubmissionPage() {
                 type="button"
                 onClick={handleChooseFile}
                 className="px-4 py-2 bg-white border rounded shadow-sm"
+                disabled={isUploading}
               >
                 Pilih File
               </button>
@@ -225,8 +362,19 @@ export default function SubmissionPage() {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                onChange={handleFileChange}
+                onChange={handleFileSelect}
               />
+
+              {selectedFile && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-700 font-medium">
+                    File dipilih: {selectedFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Klik tombol Upload di bawah untuk mengirim
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center my-4">
@@ -235,15 +383,23 @@ export default function SubmissionPage() {
               <div className="flex-grow border-t border-gray-300"></div>
             </div>
 
-            <form onSubmit={handleSubmitUrl} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Masukkan URL file"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-black"
-                disabled={isUploading}
-              />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!selectedFile && (
+                <input
+                  type="text"
+                  placeholder="Atau masukkan URL file"
+                  value={url}
+                  onChange={(e) => {
+                    setUrl(e.target.value);
+                    if (e.target.value.trim()) {
+                      setSubmitMode("url");
+                      setSelectedFile(null);
+                    }
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-black"
+                  disabled={isUploading}
+                />
+              )}
 
               {message && (
                 <p
@@ -260,16 +416,19 @@ export default function SubmissionPage() {
                   type="button"
                   onClick={() => {
                     setUrl("");
+                    setSelectedFile(null);
+                    setSubmitMode(null);
                     setMessage(null);
                   }}
                   className="rounded-lg border px-4 py-2 bg-white"
+                  disabled={isUploading}
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={isUploading}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-white"
+                  disabled={isUploading || (!selectedFile && !url.trim())}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {isUploading ? "Sedang Upload..." : "Upload"}
                 </button>
