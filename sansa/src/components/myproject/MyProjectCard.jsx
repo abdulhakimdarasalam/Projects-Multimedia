@@ -1,18 +1,19 @@
-// src/components/myproject/MyProjectCard.jsx
+// src/components/myproject/MyProjectCard.jsx (Perubahan pada baris detailUrl)
+"use client";
 
 import { HiOutlineCalendar } from "react-icons/hi";
 import Link from "next/link";
 
-// Helper untuk menentukan warna badge status
+// Helper untuk menentukan warna badge status (TETAP SAMA)
 const getStatusColor = (status) => {
   if (!status) status = "default";
   switch (status.toLowerCase()) {
     case "approved":
     case "disetujui":
+    case "in progress":
       return "bg-green-100 text-green-800";
     case "pending":
     case "menunggu":
-    case "in progress": // Tambahkan status "In Progress"
       return "bg-yellow-100 text-yellow-800";
     case "rejected":
     case "ditolak":
@@ -24,17 +25,16 @@ const getStatusColor = (status) => {
 
 export default function ActiveProjectCard({ project }) {
   // 'project' di sini adalah objek yg sudah di-flatten di page.jsx
-  // Mengambil category dihilangkan untuk mencocokkan desain
-  const { id, status, title, date } = project;
+  // Terima beberapa kemungkinan nama field (id, projectId, atau project_id)
+  const { id, projectId: pid, project_id, status, title, date } = project;
+  const projectId = pid || id || project_id;
 
-  // Tentukan URL detail project ke submission page
-  // Saya berasumsi Anda ingin mengirim ID project ke halaman submission.
-  const detailUrl = `/user/base-project/submission/${id}`;
+  // Jika projectId belum tersedia, gunakan '#' untuk mencegah error
+  const detailUrl = projectId ? `/user/base-project/${projectId}/detail` : `#`;
 
   return (
-    // Styling card yang lebih mendekati desain
     <div className="flex items-center justify-between gap-4 rounded-xl border-b bg-white p-6 transition-colors shadow-sm hover:shadow-md">
-      {/* Kolom Kiri: Informasi Proyek */}
+      {/* Kolom Kiri: Informasi Proyek (TETAP SAMA) */}
       <div className="flex-1 min-w-0">
         {/* Badge status dinamis */}
         <span
@@ -60,19 +60,18 @@ export default function ActiveProjectCard({ project }) {
                     month: "short",
                     year: "numeric",
                   })
-                  .replace(/\./g, "") // Format tanggal sesuai contoh desain (e.g., 15 Sep 2025)
+                  .replace(/\./g, "")
               : "Tanggal tidak tersedia"}
           </span>
         </div>
       </div>
 
-      {/* Kolom Kanan: Link Detail */}
+      {/* Kolom Kanan: Link Detail (TETAP SAMA) */}
       <div className="flex-shrink-0">
-        <Link
-          href={detailUrl}
-          className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap"
-        >
-          Lihat Detail
+        <Link href={detailUrl} className="whitespace-nowrap">
+          <span className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+            Lihat Detail
+          </span>
         </Link>
       </div>
     </div>
