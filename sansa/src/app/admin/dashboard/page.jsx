@@ -161,7 +161,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Pagination (sudah dinamis) */}
-          <div className="mt-4 flex items-center justify-end gap-2 text-sm">
+          <div className="mt-4 flex text-black items-center justify-end gap-2 text-sm">
             <button
               className="rounded p-2 hover:bg-gray-100 disabled:opacity-50"
               onClick={() =>
