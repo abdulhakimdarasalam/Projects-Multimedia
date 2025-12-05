@@ -93,10 +93,6 @@ export default function AddTaskPage() {
   return (
     <div className="bg-white p-8 rounded-xl shadow-sm max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Buat Tugas Baru</h1>
-      <p className="mb-6 text-sm text-gray-500">
-        Menambahkan tugas untuk Project ID:{" "}
-        <span className="font-mono">{projectId}</span>
-      </p>
 
       {/* Tampilkan pesan error jika ada */}
       {error && (
