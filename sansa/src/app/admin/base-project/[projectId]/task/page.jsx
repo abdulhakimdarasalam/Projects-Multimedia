@@ -40,6 +40,8 @@ export default function ProjectTaskPage() {
   // PERBAIKAN: Gunakan hook 'useParams' untuk mendapatkan projectId
   const { projectId } = useParams(); // Ini akan berisi ID dari URL
 
+  const [projectName, setProjectName] = useState("");
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -87,6 +89,28 @@ export default function ProjectTaskPage() {
     fetchTasks();
   }, [projectId, router]); // Dependency array sekarang 'projectId'
 
+  // Fetch project name separately so header can show project title
+  useEffect(() => {
+    const fetchProjectName = async () => {
+      if (!projectId) return;
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        const res = await axios.get("http://localhost:4000/projects", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const all = res.data || [];
+        const proj = all.find((p) => String(p.id) === String(projectId));
+        setProjectName(proj?.title || "");
+      } catch (err) {
+        console.error("Gagal memuat nama project:", err);
+      }
+    };
+
+    fetchProjectName();
+  }, [projectId]);
+
   if (loading) {
     return <div className="p-10 text-center">Memuat tasks...</div>;
   }
@@ -95,11 +119,36 @@ export default function ProjectTaskPage() {
     return <div className="p-10 text-center text-red-600">Error: {error}</div>;
   }
 
+  const handleEdit = (taskId) => {
+    router.push(`/admin/base-project/${projectId}/task/${taskId}/edit`);
+  };
+
+  const handleDelete = async (taskId) => {
+    const ok = window.confirm(
+      "Yakin ingin menghapus task ini? Tindakan ini tidak bisa dibatalkan."
+    );
+    if (!ok) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) throw new Error("Unauthorized");
+
+      await axios.delete(`http://localhost:4000/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } catch (err) {
+      console.error("Gagal menghapus task:", err);
+      alert(err?.response?.data?.message || "Gagal menghapus task.");
+    }
+  };
+
   return (
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-bold text-gray-800">
-          Project (ID: {projectId})
+          {projectName ? ` ${projectName}` : `Project ID: ${projectId}`}
         </h1>
         <p className="mt-1 text-3xl font-bold text-gray-800">Kelola Tasks</p>
       </header>
@@ -160,10 +209,18 @@ export default function ProjectTaskPage() {
                       >
                         <HiOutlineCheckCircle className="h-4 w-4" />
                       </Link>
-                      <button className="rounded p-2 text-green-600 hover:bg-green-100">
+                      <button
+                        onClick={() => handleEdit(task.id)}
+                        className="rounded p-2 text-green-600 hover:bg-green-100"
+                        title="Edit task"
+                      >
                         <HiOutlinePencil className="h-4 w-4" />
                       </button>
-                      <button className="rounded p-2 text-red-600 hover:bg-red-100">
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="rounded p-2 text-red-600 hover:bg-red-100"
+                        title="Hapus task"
+                      >
                         <HiOutlineTrash className="h-4 w-4" />
                       </button>
                     </div>
