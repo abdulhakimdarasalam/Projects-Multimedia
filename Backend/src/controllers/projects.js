@@ -1,15 +1,36 @@
 const { Project, ProjectRegistration, sequelize } = require("../models"); // <-- Tambah ProjectRegistration
 const { ValidationError } = require("sequelize");
 
-exports.getAllProjects = (req, res) => {
-  Project.findAll()
-    .then((projects) => {
-      res.status(200).json(projects);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json({ message: "Something went wrong" });
-    });
+exports.getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.findAll();
+
+    // Tambahkan participants_count: jumlah ProjectRegistration dengan status 'accepted'
+    const projectsWithCounts = await Promise.all(
+      projects.map(async (p) => {
+        const count = await ProjectRegistration.count({
+          where: { project_id: p.id, status: "accepted" },
+        });
+
+        return {
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          start_date: p.start_date,
+          end_date: p.end_date,
+          status: p.status,
+          participants_count: count,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+        };
+      })
+    );
+
+    res.status(200).json({ status: "success", data: projectsWithCounts });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
 };
 
 exports.createProject = async (req, res) => {
