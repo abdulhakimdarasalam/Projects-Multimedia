@@ -277,14 +277,6 @@ export default function SubmissionPage() {
           <h2 className="text-2xl font-semibold text-gray-800">
             Deskripsi Task & Submit
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Project ID: <span className="font-mono">{projectId}</span>
-            {taskId ? (
-              <span className="ml-3 text-sm text-gray-400">
-                Task ID: <span className="font-mono">{taskId}</span>
-              </span>
-            ) : null}
-          </p>
         </header>
 
         <section className="grid grid-cols-1 gap-6">
@@ -335,7 +327,9 @@ export default function SubmissionPage() {
           {/* Submission Form Section */}
           <div className="bg-white border rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-md font-semibold">Tambah Submission</h4>
+              <h4 className="text-md text-black font-semibold">
+                Tambah Submission
+              </h4>
             </div>
 
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
@@ -420,7 +414,7 @@ export default function SubmissionPage() {
                     setSubmitMode(null);
                     setMessage(null);
                   }}
-                  className="rounded-lg border px-4 py-2 bg-white"
+                  className="rounded-lg border text-black px-4 py-2 bg-white"
                   disabled={isUploading}
                 >
                   Batal
