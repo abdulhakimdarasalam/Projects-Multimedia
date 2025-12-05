@@ -1,7 +1,7 @@
 // src/components/dashboard/ProjectCard.jsx
 import Image from "next/image";
-import { HiOutlineClock } from "react-icons/hi";
-import { format, formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import { format } from "date-fns";
 import { id } from "date-fns/locale/id"; // Untuk Bahasa Indonesia
 
 export default function ProjectCard({ project }) {
@@ -17,14 +17,7 @@ export default function ProjectCard({ project }) {
     ? format(deadlineDate, "d MMM yyyy", { locale: id })
     : "N/A"; // Fallback jika 'deadline' null atau invalid
 
-  // 2. Cek 'lastUpdate' (Ini yang error)
-  const lastUpdateDate = new Date(lastUpdate); // Coba parse
-  // Cek apakah hasilnya valid
-  const isLastUpdateValid = !isNaN(lastUpdateDate.getTime());
-
-  const timeAgo = isLastUpdateValid
-    ? formatDistanceToNow(lastUpdateDate, { locale: id })
-    : "Baru saja";
+  // 2. lastUpdate tidak lagi ditampilkan pada kartu dashboard
 
   return (
     <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
@@ -48,15 +41,14 @@ export default function ProjectCard({ project }) {
         <h3 className="mt-1 text-lg font-bold text-gray-800">{title}</h3>
         <p className="mt-2 text-sm text-gray-600 line-clamp-3">{description}</p>
 
-        <div className="mt-4 flex items-center gap-2 text-xs text-yellow-600">
-          <HiOutlineClock />
-          {/* 3. Gunakan 'lastUpdate' yang sudah diformat */}
-          <span>Update {timeAgo} ago</span>
-        </div>
+        <div className="mt-4" />
 
-        <button className="mt-4 w-full rounded-lg bg-[#6080A4] py-2.5 text-sm font-semibold text-white transition hover:bg-[#526d8c]">
+        <Link
+          href={`/user/base-project`}
+          className="mt-4 block w-full rounded-lg bg-[#6080A4] py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#526d8c]"
+        >
           Lanjutkan
-        </button>
+        </Link>
       </div>
     </div>
   );
