@@ -128,7 +128,6 @@ export default function TambahProjectPage() {
               className="w-full text-black rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               disabled={isLoading}
             />
-            <HiOutlineCalendar className="pointer-events-none absolute right-4 top-10 h-5 w-5 text-gray-400" />
           </div>
 
           {/* Input Deadline */}
@@ -147,7 +146,6 @@ export default function TambahProjectPage() {
               className="w-full text-black rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               disabled={isLoading}
             />
-            <HiOutlineCalendar className="pointer-events-none absolute right-4 top-10 h-5 w-5 text-gray-400" />
           </div>
         </div>
 
