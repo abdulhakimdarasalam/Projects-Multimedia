@@ -8,7 +8,8 @@ export default function BaseProjectCard({ project, onJoin }) {
     status,
     title,
     description,
-    date,
+    end_date,
+    participants_count,
     participants,
     maxParticipants,
   } = project;
@@ -27,11 +28,19 @@ export default function BaseProjectCard({ project, onJoin }) {
         <div className="mt-4 space-y-2 text-sm text-gray-500">
           <div className="flex items-center gap-2">
             <HiOutlineCalendar className="h-4 w-4" />
-            <span>{date}</span>
+            <span>
+              {end_date
+                ? new Date(end_date).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "Tanggal tidak tersedia"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <HiOutlineUsers className="h-4 w-4" />
-            <span>{`${participants}/${maxParticipants} orang`}</span>
+            <span>{`${participants_count ?? participants ?? 0} Orang`}</span>
           </div>
         </div>
       </div>
