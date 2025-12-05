@@ -87,9 +87,6 @@ export default function ProjectTasksPageClient() {
     <div className="p-8 max-w-5xl mx-auto bg-gray-50 min-h-screen">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Daftar Tugas</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Project ID: <span className="font-mono">{projectId}</span>
-        </p>
       </header>
 
       {loading && <p className="text-gray-600">Memuat tugas...</p>}
@@ -142,7 +139,6 @@ export default function ProjectTasksPageClient() {
                     {task.description}
                   </p>
                 )}
-                <p className="text-xs text-gray-400 mt-2">Task ID: {task.id}</p>
               </div>
 
               <div className="flex-shrink-0 ml-4">
