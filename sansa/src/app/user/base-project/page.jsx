@@ -123,13 +123,16 @@ export default function BaseProjectPage() {
       setMyProjects(formattedProjects);
       setErrorMine(null);
     } catch (err) {
-      console.error("Gagal fetch 'Project Saya':", err);
-      // Ini akan menangkap error 404 dari Axios
+      // Jika backend mengembalikan 404 (mis. user belum punya project),
+      // anggap sebagai "tidak ada project" — jangan tampilkan error.
       if (err.response && err.response.status === 404) {
-        setErrorMine(
-          "Endpoint 'Project Saya' tidak ditemukan (404). Cek URL API."
+        console.warn(
+          "API 'Project Saya' mengembalikan 404 — anggap user belum punya project."
         );
+        setMyProjects([]);
+        setErrorMine(null);
       } else {
+        console.error("Gagal fetch 'Project Saya':", err);
         setErrorMine("Gagal memuat data project saya.");
       }
     } finally {
@@ -186,9 +189,21 @@ export default function BaseProjectPage() {
         </p>
       );
 
+    // Filter out projects that already appear in 'myProjects'
+    const myIds = myProjects.map((p) => p.id);
+    const filtered = allProjects.filter((p) => !myIds.includes(p.id));
+
+    if (filtered.length === 0) {
+      return (
+        <p className="text-gray-500">
+          Tidak ada project yang tersedia saat ini.
+        </p>
+      );
+    }
+
     return (
       <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-        {allProjects.map((project) => (
+        {filtered.map((project) => (
           <BaseProjectCard
             key={project.id}
             project={project}
