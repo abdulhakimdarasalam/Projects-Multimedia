@@ -48,6 +48,7 @@ export default function AdminBaseProjectPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionMessage, setActionMessage] = useState(null);
 
   // useEffect untuk fetch data
   useEffect(() => {
@@ -67,7 +68,9 @@ export default function AdminBaseProjectPage() {
           },
         });
 
-        setProjects(response.data);
+        // API mungkin mengembalikan array langsung atau objek { status, data }
+        const payload = response.data?.data ?? response.data;
+        setProjects(Array.isArray(payload) ? payload : []);
       } catch (err) {
         console.error("Error fetching projects:", err);
 
@@ -88,6 +91,39 @@ export default function AdminBaseProjectPage() {
     router.push(`/admin/base-project/${projectId}/task`);
   };
 
+  const handleEdit = (e, projectId) => {
+    e.stopPropagation();
+    router.push(`/admin/base-project/${projectId}/edit`);
+  };
+
+  const handleDelete = async (e, projectId) => {
+    e.stopPropagation();
+
+    const ok = window.confirm(
+      "Yakin ingin menghapus project ini? Tindakan ini tidak bisa dibatalkan."
+    );
+    if (!ok) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) throw new Error("Unauthorized");
+
+      await axios.delete(`http://localhost:4000/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      setActionMessage("Project berhasil dihapus.");
+      setTimeout(() => setActionMessage(null), 3000);
+    } catch (err) {
+      console.error("Gagal menghapus project:", err);
+      setActionMessage(
+        err?.response?.data?.message || "Gagal menghapus project."
+      );
+      setTimeout(() => setActionMessage(null), 4000);
+    }
+  };
+
   // Tampilkan status Loading
   if (loading) {
     return <div className="p-10 text-center">Memuat project...</div>;
@@ -101,6 +137,11 @@ export default function AdminBaseProjectPage() {
   // Tampilan utama
   return (
     <div className="space-y-8">
+      {actionMessage && (
+        <div className="p-3 rounded bg-green-50 text-green-700 border border-green-100">
+          {actionMessage}
+        </div>
+      )}
       {/* Header Halaman */}
       <header>
         <h1 className="text-2xl font-bold text-gray-800">Welcome admin!</h1>
@@ -124,9 +165,6 @@ export default function AdminBaseProjectPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="p-4 w-12">
-                  <input type="checkbox" className="rounded border-gray-300" />
-                </th>
                 <th className="p-4 font-semibold text-gray-600">
                   Nama Project
                 </th>
@@ -145,12 +183,6 @@ export default function AdminBaseProjectPage() {
                   className="hover:bg-gray-100 cursor-pointer transition-colors"
                   onClick={() => handleRowClick(project.id)}
                 >
-                  <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300"
-                    />
-                  </td>
                   <td className="p-4 font-medium text-gray-800">
                     {project.title}
                   </td>
@@ -171,10 +203,18 @@ export default function AdminBaseProjectPage() {
                   </td>
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
-                      <button className="rounded p-2 text-green-600 hover:bg-green-100">
+                      <button
+                        onClick={(e) => handleEdit(e, project.id)}
+                        className="rounded p-2 text-green-600 hover:bg-green-100"
+                        title="Edit project"
+                      >
                         <HiOutlinePencil className="h-4 w-4" />
                       </button>
-                      <button className="rounded p-2 text-red-600 hover:bg-red-100">
+                      <button
+                        onClick={(e) => handleDelete(e, project.id)}
+                        className="rounded p-2 text-red-600 hover:bg-red-100"
+                        title="Hapus project"
+                      >
                         <HiOutlineTrash className="h-4 w-4" />
                       </button>
                     </div>
