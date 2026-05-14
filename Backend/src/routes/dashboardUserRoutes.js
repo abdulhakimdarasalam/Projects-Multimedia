@@ -1,9 +1,9 @@
 // routes/dashboardUserRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getDashboardStats } = require('../controllers/dashboardUserController'); // Perhatikan nama controllernya
+const { getDashboardStats } = require('../controllers/dashboardUserController');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
-// Rute ini akan menjadi GET /api/v1/dashboard-user/stats
-router.get('/stats', getDashboardStats);
+router.get('/stats', verifyToken, getDashboardStats);
 
 module.exports = router;

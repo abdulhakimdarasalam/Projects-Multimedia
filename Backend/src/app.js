@@ -2,11 +2,8 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
-// Impor SEMUA middleware auth
-const {
-  verifyToken, // <-- IMPORT INI
-  autoRefreshToken,
-} = require("./middlewares/authMiddleware.js");
+// Import middleware auth
+const { autoRefreshToken } = require("./middlewares/authMiddleware.js");
 
 const app = express();
 
@@ -34,8 +31,6 @@ app.use(
 );
 
 app.use("/auth", authRouter);
-
-app.use(verifyToken);
 
 app.use("/users", usersRouter);
 app.use("/projects", projectsRouter);

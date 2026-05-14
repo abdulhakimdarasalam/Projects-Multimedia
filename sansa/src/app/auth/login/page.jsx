@@ -7,7 +7,7 @@ export default function LoginPage() {
       <div className="relative flex w-full max-w-4xl flex-row overflow-hidden rounded-xl bg-white shadow-lg">
         <div className="w-full p-8 sm:w-1/2 md:p-12">
           <h1 className="text-3xl font-bold text-[#5E7FAA]">
-            Welcome Back #Stark
+            Welcome To STARK
           </h1>
           <p className="mt-2 text-base text-gray-600">Log In To Your Account</p>
 

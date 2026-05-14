@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "../lib/api"; // <-- Mengimpor file api.js Anda yang canggih
+import api from "@/lib/api";
 
 export const useRegistrationStore = create((set, get) => ({
   // --- STATE ---
@@ -37,7 +37,7 @@ export const useRegistrationStore = create((set, get) => ({
     set({ loading: true }); // Bisa tambahkan loading per-item jika mau
     try {
       // Panggil API PATCH /project-registrations/:id/accept
-      await api.patch(`/project-registrations/${registrationId}/accept`);
+      await api.put(`/project-registrations/${registrationId}/accept`);
 
       // Setelah berhasil, panggil ulang fetchRegistrations untuk refresh daftar
       get().fetchRegistrations("pending"); // 'get()' untuk memanggil aksi lain
@@ -61,8 +61,8 @@ export const useRegistrationStore = create((set, get) => ({
     set({ loading: true });
     try {
       // Panggil API PATCH /project-registrations/:id/reject
-      await api.patch(`/project-registrations/${registrationId}/reject`, {
-        rejection_reason: reason, // Kirim 'reason' di body
+      await api.put(`/project-registrations/${registrationId}/reject`, {
+        rejection_reason: reason,
       });
 
       // Refresh daftar

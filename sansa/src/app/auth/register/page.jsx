@@ -12,7 +12,6 @@ export default function RegisterPage() {
         </div>
 
         <RegisterForm />
-        <RegisterForm />
 
         <p className="mt-8 text-center text-sm text-gray-500">
           Already have account?{" "}

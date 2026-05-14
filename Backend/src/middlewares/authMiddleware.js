@@ -34,7 +34,9 @@ exports.verifyToken = (req, res, next) => {
       console.error("JWT verification error:", err.message);
       if (err.name === "TokenExpiredError") {
         req.expiredToken = token;
-        return next("tokenExpired");
+        const expiredErr = new Error("TOKEN_EXPIRED");
+        expiredErr.name = "TokenExpiredError";
+        return next(expiredErr);
       }
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -53,7 +55,7 @@ exports.isAdmin = (req, res, next) => {
 
 // Middleware otomatis memperbarui access token
 exports.autoRefreshToken = async (err, req, res, next) => {
-  if (err !== "tokenExpired") return next(err);
+  if (err.name !== "TokenExpiredError") return next(err);
 
   try {
     const refreshToken = req.cookies.refreshToken;

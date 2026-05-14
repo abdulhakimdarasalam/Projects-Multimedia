@@ -1,4 +1,4 @@
-const { Project, ProjectRegistration, sequelize } = require("../models"); // <-- Tambah ProjectRegistration
+const { Project, ProjectRegistration } = require("../models");
 const { ValidationError } = require("sequelize");
 
 exports.getAllProjects = async (req, res) => {

@@ -9,7 +9,7 @@ exports.getAdminDashboardData = async (req, res) => {
 
     const queries = [
       // Query 0: Total User
-      db.User.count({ where: { role: "MEMBER" } }),
+      db.User.count({ where: { role: "member" } }),
 
       // Query 1: Project Aktif (ongoing)
       db.Project.count({ where: { status: "ongoing" } }),
